@@ -120,7 +120,7 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
     list: (Rpx) => visibleSites(m, "wonders", m.wonders, Rpx),
     draw(ctx, vp, w, o) {
       drawSites(ctx, vp, o, wonders.list(o.Rpx), (it, size) => {
-        drawWonder(ctx, it.wkind, it.x, it.y, size, { variant: it.variant, motif: it.motif, rank: it.data.rank });
+        drawWonder(ctx, it.wkind, it.x, it.y, size, { id: it.data.id, variant: it.variant, motif: it.motif, rank: it.data.rank });
       });
     },
     warm(ctx, vp, w, o) { wonders.draw(ctx, vp, w, o); },
@@ -174,7 +174,7 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
       const x = m.w.grid.cx(cell), y = m.w.grid.cy(cell);
       if (x < vp.x0 - pad || x > vp.x1 + pad || y < vp.y0 - pad || y > vp.y1 + pad) continue;
       const [sx, sy] = o.toScreen(x, y);
-      const half = Math.min(110, 40 + String(city.name || "").length * 4);
+      const half = o.Rpx > 24 ? 140 : Math.min(110, 40 + String(city.name || "").length * 4);
       out.push([sx - half, sy - o.Rpx * 0.75 - (o.Rpx > 24 ? 52 : 30), sx + half, sy - o.Rpx * 0.35]);
     }
     return out;
@@ -213,10 +213,14 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
       if (!text) continue;
       const kind = it.kind === "fort" ? "fort" : it.wkind;
       const y = sy + size * 0.42;
-      const box = drawPlaque(ctx, text, sx, y, { kind, scale, measureOnly: true });
-      if (placed.some((p) => box[0] < p[2] && p[0] < box[2] && box[1] < p[3] && p[1] < box[3])) continue;
-      placed.push(box);
-      drawPlaque(ctx, text, sx, y, { kind, scale });
+      // A nearby city banner can cover one end of the plaque. Keep its centre beneath the tile's footprint.
+      for (const x of [sx, sx - size * 0.4, sx + size * 0.4]) {
+        const box = drawPlaque(ctx, text, x, y, { kind, scale, measureOnly: true });
+        if (placed.some((p) => box[0] < p[2] && p[0] < box[2] && box[1] < p[3] && p[1] < box[3])) continue;
+        placed.push(box);
+        drawPlaque(ctx, text, x, y, { kind, scale });
+        break;
+      }
     }
     o.world();
   }
