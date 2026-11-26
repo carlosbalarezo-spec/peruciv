@@ -1,0 +1,143 @@
+name: Team Baton
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/team/BATON.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: team-baton
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate baton
+        id: baton
+        run: python scripts/team/baton.py --github
+
+      - name: Idempotency guard
+        id: guard
+        if: steps.baton.outputs.dispatchable == 'true'
+        env:
+          BRANCH: ${{ steps.baton.outputs.next_branch }}
+        run: |
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "existing=true" >> "$GITHUB_OUTPUT"
+            echo "Rama $BRANCH ya existe: despacho duplicado suprimido."
+          else
+            echo "existing=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Notify non-Codex turn
+        if: steps.baton.outputs.dispatchable != 'true'
+        uses: actions/github-script@v7
+        env:
+          OPERATOR: ${{ steps.baton.outputs.next_operator }}
+          DISPATCH: ${{ steps.baton.outputs.next_dispatch }}
+          TASK: ${{ steps.baton.outputs.next_task_file }}
+        with:
+          script: |
+            const marker = `TURN|${process.env.DISPATCH}|${process.env.OPERATOR}`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner, repo: context.repo.repo, state: 'all', per_page: 100 });
+            if (issues.some(i => !i.pull_request && (i.body || '').includes(marker))) return;
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `Turno de ${process.env.OPERATOR}: ${process.env.DISPATCH}`,
+              body: [marker, '', `Tarea: \`${process.env.TASK}\``,
+                     'Este turno no se ejecuta en Actions. Actívalo desde tu IDE/CLI (Antigravity) o resuélvelo tú.'].join('\n'),
+            });
+
+      - name: Prepare branch and prompt
+        if: steps.guard.outputs.existing == 'false'
+        env:
+          BRANCH: ${{ steps.baton.outputs.next_branch }}
+          TASK: ${{ steps.baton.outputs.next_task_file }}
+          DISPATCH: ${{ steps.baton.outputs.next_dispatch }}
+        run: |
+          git switch -c "$BRANCH"
+          {
+            echo "Eres CODEX en el equipo peruciv (con Antigravity). Despacho: $DISPATCH."
+            echo "Lee docs/team/PROTOCOL.md y respeta la propiedad de archivos."
+            echo "No modifiques docs/team/BATON.md, docs/team/PROTOCOL.md ni .github/."
+            echo "No hagas commit ni push: el runner externo valida y publica."
+            echo "Al terminar, resume lo hecho y qué debe revisar Antigravity."
+            echo
+            echo "===== TAREA ====="
+            cat "$TASK"
+          } > "$RUNNER_TEMP/prompt.md"
+
+      - name: Check OpenAI credential
+        id: cred
+        if: steps.guard.outputs.existing == 'false'
+        env:
+          K: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$K" ]; then echo "present=false" >> "$GITHUB_OUTPUT"; echo "::warning::OPENAI_API_KEY ausente"; else echo "present=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Run Codex
+        id: codex
+        if: steps.cred.outputs.present == 'true'
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: ${{ runner.temp }}/prompt.md
+          working-directory: .
+          safety-strategy: drop-sudo
+          allow-users: carlosbalarezo-spec
+          output-file: ${{ runner.temp }}/codex-final.txt
+
+      - name: Outer gate and publish PR
+        id: publish
+        if: steps.codex.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.baton.outputs.next_branch }}
+          DISPATCH: ${{ steps.baton.outputs.next_dispatch }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "Codex no produjo cambios" >&2; exit 4
+          fi
+          BAD="$(git status --porcelain | sed -E 's/^.. //' | grep -E '^(docs/team/BATON\.md|docs/team/PROTOCOL\.md|\.github/)' || true)"
+          if [ -n "$BAD" ]; then echo "Cambios no autorizados:" >&2; echo "$BAD" >&2; exit 6; fi
+          python scripts/team/check_encoding.py
+          python -m pipeline check
+          python -m unittest discover -s tests
+          git config user.name "Codex (Actions)"
+          git config user.email "codex-actions@users.noreply.github.com"
+          git add -A
+          git commit -m "team($DISPATCH): resultado de Codex"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          gh pr create --base main --head "$BRANCH" --title "[$DISPATCH] Codex" \
+            --body "$(printf 'Despacho %s ejecutado por Codex vía Actions.\n\nVerificado: encoding, pipeline check, tests.\n\nInforme de Codex:\n\n%s' "$DISPATCH" "$(head -c 20000 "$RUNNER_TEMP/codex-final.txt" 2>/dev/null)")"
+
+      - name: Report failure
+        if: failure() && steps.baton.outputs.dispatchable == 'true' && steps.guard.outputs.existing == 'false'
+        uses: actions/github-script@v7
+        env:
+          DISPATCH: ${{ steps.baton.outputs.next_dispatch }}
+          CRED: ${{ steps.cred.outputs.present }}
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `STOP ${process.env.DISPATCH}: despacho a Codex falló`,
+              body: `Credencial presente: ${process.env.CRED}\nRevisa el run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });

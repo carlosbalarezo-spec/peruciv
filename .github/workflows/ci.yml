@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Baton
+        run: python scripts/team/baton.py
+      - name: Encoding
+        run: python scripts/team/check_encoding.py
+      - name: Data contracts
+        run: python -m pipeline check
+      - name: Tests
+        run: python -m unittest discover -s tests -v
+      - name: Engine tests (si existen)
+        run: |
+          if [ -d web/js/ext/game/engine ] && command -v node >/dev/null; then
+            find web/js/ext/game/engine -name '*.test.js' -print0 | xargs -0 -r -n1 node --test
+          else
+            echo "sin motor de juego todavía"
+          fi
