@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   dispatch:
+    if: github.ref == 'refs/heads/main'
+    environment: peruciv-OpenAI   
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
