@@ -12,6 +12,7 @@
 | D-008 | 2026-11-26 | Los 22 territorios no simulados en el prototipo quedan como contexto geográfico; solo 2 rivales activos | Codex | Aceptada |
 | D-009 | 2026-11-26 | Despacho a Codex vía GitHub Actions (`team-baton.yml`); Antigravity se activa desde el IDE del usuario | Usuario / Antigravity | Aceptada |
 | D-010 | 2026-11-26 | Orquestación Etapa 1 la ejerce Antigravity desde la aceptación del relevo en el issue #1 | Antigravity | Aceptada |
-| D-011 | 2026-11-26 | La inspección de la oferta por etapas exige acceso habilitado antes del día 60 | Antigravity (a confirmar por Codex) | Propuesta |
-| D-012 | 2026-11-26 | O&M del acceso lo asume la municipalidad provincial; variante con O&M regional se corre como prueba | Antigravity (a confirmar por Codex) | Propuesta |
-| D-013 | 2026-11-26 | El secreto OPENAI_API_KEY no existe en peruciv: el despacho automático a Codex queda inactivo hasta que el usuario lo configure; mientras tanto el baton se lee en sesión | Antigravity | Vigente |
+| D-011 | 2026-11-26 | La inspección de la oferta por etapas exige acceso habilitado antes del día 60 | Antigravity + Codex | Aceptada (`08`) |
+| D-012 | 2026-11-26 | O&M del acceso lo asume la municipalidad provincial; variante con O&M regional se corre como prueba | Antigravity + Codex | Aceptada (`08`) |
+| D-013 | 2026-11-26 | El secreto `OPENAI_API_KEY` quedó configurado en el entorno `peruciv-OpenAI`; falta habilitar en GitHub Actions el permiso de crear PR | Antigravity | Vigente |
+| D-014 | 2026-11-26 | El tutorial corto pasa de Callao a **Ica–Pisco** porque Callao tiene 0 hexágonos terrestres en `world.json`; rival fijado en 85 min para filtro simétrico ≤ 90 min | Codex + Antigravity | Aceptada (`09`) |
