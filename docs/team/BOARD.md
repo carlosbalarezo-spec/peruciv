@@ -2,23 +2,23 @@
 
 Estados: `TODO` · `DOING` · `REVIEW` · `DONE` · `BLOCKED`. Dueño = quien ejecuta; revisor = quien verifica.
 
-## Etapa 1 · Diseño y auditoría (orquesta: Antigravity desde D-010)
+## Etapa 1 · Diseño y auditoría (orquestó: Antigravity) — CERRADA
 
 | ID | Tarea | Dueño | Revisor | Estado | Depende de |
 |---|---|---|---|---|---|
-| T-101 | Traza en papel de Arequipa (3 estrategias × 2 rondas) | Codex | Antigravity | DONE (`04_traza_arequipa.md`, revisada en `07` y `08`) | — |
-| T-102 | Inventario y auditoría de fuentes: qué es evidencia, qué es supuesto | Antigravity | Codex | DONE (`06_auditoria_fuentes.md`) | — |
-| T-102b | Extraer MEF/SUNASS/ANA para Arequipa e Ica–Pisco y verificar cada URL | Antigravity | Codex | DOING (`PC-004`) | T-102 |
-| T-103 | Ficha de tutorial + boceto de interfaz + revisión de la traza (reemplazado Callao → Ica–Pisco en `09`) | Antigravity + Codex | Mutuo | DONE (`07` + `09_tutorial_ica_pisco.md`) | T-101 |
-| T-104 | Campos requeridos por el contrato (`08`) vs. campos disponibles en `web/data/` | Antigravity | Codex | DOING (`PC-004`) | T-105 |
-| T-105 | Contrato `game.json` v0.1 + respuesta a la revisión de Antigravity (PC-003) | Codex | Antigravity | DONE (`08_contrato_game_json_v0_1.md`) | T-101, T-103 |
-| T-106 | Cierre de Etapa 1: dos trazas + revisión cruzada + inventario → decisión de pasar a Etapa 2 y relevo a Codex | Orquestador | — | TODO | T-102b, T-104 |
+| T-101 | Traza en papel de Arequipa (3 estrategias × 2 rondas) | Codex | Antigravity | DONE (`04` + `08`) | — |
+| T-102 | Inventario y auditoría de fuentes: qué es evidencia, qué es supuesto | Antigravity | Codex | DONE (`06`) | — |
+| T-102b | Verificar URLs reales MEF/SUNASS/ANA/MTC/APN/MIDAGRI/MINEM/ENAPRES/Defensoría | Antigravity | Codex | DONE (`10_matriz_cobertura_y_auditoria.md`) | T-102 |
+| T-103 | Ficha de tutorial + boceto de interfaz + revisión de la traza (Ica–Pisco en `09`) | Antigravity + Codex | Mutuo | DONE (`07` + `09`) | T-101 |
+| T-104 | Campos requeridos por el contrato (`08`) vs. campos disponibles en `web/data/` | Antigravity | Codex | DONE (`10_matriz_cobertura_y_auditoria.md`) | T-105 |
+| T-105 | Contrato `game.json` v0.1 + respuesta a la revisión de Antigravity (PC-003) | Codex | Antigravity | DONE (`08`) | T-101, T-103 |
+| T-106 | Cierre de Etapa 1 y relevo de orquestación a Codex | Antigravity | Codex | DONE | T-102b, T-104 |
 
 ## Etapa 2 · Prototipo autorizado (orquesta: Codex)
 
 | ID | Tarea | Dueño | Revisor | Estado |
 |---|---|---|---|---|
-| T-201 | Motor puro `web/js/ext/game/engine/` + pruebas (repetición, febrero/diciembre, reservas, desvío de enlace, desempate) | Codex | Antigravity | BLOCKED (espera T-106) |
-| T-202 | `pipeline/sources/` nuevas + `pipeline/build/game_data.py` + `web/data/game.json` + validación | Antigravity | Codex | BLOCKED |
-| T-203 | `web/js/ext/game/ui/` + overlays + registro en `ext/index.js` + regreso limpio al Atlas | Antigravity | Codex | BLOCKED |
-| T-204 | Integración y traza reproducible extremo a extremo | Orquestador | — | BLOCKED |
+| T-201 | Motor puro `web/js/ext/game/engine/` + pruebas (`PC-005`) | Codex | Antigravity | TODO |
+| T-202 | `pipeline/build/game_data.py` + `web/data/game.json` (Arequipa + Ica–Pisco v0.1 con procedencias) + validación | Antigravity | Codex | TODO |
+| T-203 | `web/js/ext/game/ui/` + overlays + registro en `ext/index.js` + regreso limpio al Atlas | Antigravity | Codex | BLOCKED (espera T-201 y T-202) |
+| T-204 | Integración y traza reproducible extremo a extremo | Codex | Antigravity | BLOCKED |
