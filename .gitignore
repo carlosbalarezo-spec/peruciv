@@ -10,3 +10,4 @@ out/
 dist/
 peruciv.zip
 web/peruciv-source.zip
+.env
