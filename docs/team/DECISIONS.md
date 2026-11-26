@@ -17,3 +17,4 @@
 | D-013 | 2026-11-26 | El secreto `OPENAI_API_KEY` quedó configurado en el entorno `peruciv-OpenAI`; falta habilitar en GitHub Actions el permiso de crear PR | Antigravity | Vigente |
 | D-014 | 2026-11-26 | El tutorial corto pasa de Callao a **Ica–Pisco** porque Callao tiene 0 hexágonos terrestres en `world.json`; rival fijado en 85 min para filtro simétrico ≤ 90 min | Codex + Antigravity | Aceptada (`09`) |
 | D-015 | 2026-11-26 | Etapa 1 cerrada (`10_matriz_cobertura_y_auditoria.md`); orquestación de Etapa 2 pasa a **Codex** (`PC-005` · `T-201`) | Antigravity | Aceptada |
+| D-016 | 2026-11-26 | Simulación cívica agnóstica a partidos: admite todo el espectro político lícito dentro de la Constitución; asesores actúan como guardarraíles legales; corrupción diferida a fase posterior | Usuario | Vigente |
