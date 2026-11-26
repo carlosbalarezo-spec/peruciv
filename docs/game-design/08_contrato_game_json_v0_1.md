@@ -1,6 +1,6 @@
 # PC-003 · Contrato de simulación de PerúCiv v0.1
 
-**Propuesta de Codex para revisión de Antigravity.** El contrato cubre Arequipa y el tutorial del Callao. Los ejemplos de presupuesto, caudal, plazos, tiempos de ruta e incentivos de esta ficha son **simulación**. [Encargo T-105](../team/tasks/T-105-contrato-v0-1-codex.md) · [Revisión de Antigravity](./07_callao_boceto_ui_y_revision_traza.md)
+**Propuesta de Codex para revisión de Antigravity.** El contrato cubre Arequipa y el [tutorial Ica–Pisco](./09_tutorial_ica_pisco.md). Los ejemplos de presupuesto, caudal, plazos, tiempos de ruta e incentivos de esta ficha son **simulación**. [Encargo T-105](../team/tasks/T-105-contrato-v0-1-codex.md) · [Revisión de Antigravity](./07_callao_boceto_ui_y_revision_traza.md)
 
 ## Datos publicados y estado guardado
 
@@ -54,9 +54,9 @@ El presupuesto simulado de 65 unidades impide combinar agua y corredor por 85 un
 
 **Variantes de O&M en la opción por etapas.** El saldo tras invertir 60 de las 65 unidades es 5 en ambas variantes. Para la sensibilidad, cargar al mismo margen el primer año de mantenimiento y asumir cero aportes adicionales. Con el acceso a cargo de la municipalidad, la región reserva 4 para agua y conserva 1. Si la región asume 2 adicionales por el acceso, debe reservar 6 y le falta 1. Antes de aceptar un compromiso que exija esa reserva, el juego muestra el faltante. Si otra fuente elegible cubre el O&M, repetir con esa fuente y registrar su trazabilidad. El saldo presupuestal y el compromiso recurrente permanecen visibles en ambas variantes.
 
-## Callao · Misma elegibilidad, sede rival corregida
+## Tutorial · Misma elegibilidad para ambas sedes
 
-La reparación propuesta entrega 80 min y cumple el máximo de 90. La alternativa entrega 95 min y queda excluida. La ficha de Antigravity fija al rival en 100 min. Con el mismo filtro, el rival también quedaría excluido. **Propongo una sede rival a 85 min con acceso habilitado** como ajuste de balance simulado. La reparación gana por 80 frente a 85. La alternativa pierde por incumplimiento a 95. Si se mantiene al rival en 100, el caso válido es una oferta desierta cuando el jugador elige la alternativa. Para el tutorial prefiero el rival a 85 porque permite mostrar el mecanismo competitivo con una sola decisión.
+La ficha inicial del Callao fijaba al rival en 100 min frente a un límite de 90. Aplicado a ambos candidatos, ese filtro deja desierta la oferta cuando ninguna sede cumple. El tutorial Ica–Pisco usa una sede rival simulada de 85 min con acceso habilitado. Una intervención que deja la ruta en 80 min gana y una que la deja en 95 min queda excluida. El cambio de escenario conserva el contrato y cambia los parámetros y referencias de red. [Ficha y traza del tutorial](./09_tutorial_ica_pisco.md)
 
 ## Vacíos para T-104
 
@@ -71,4 +71,4 @@ La reparación propuesta entrega 80 min y cumple el máximo de 90. La alternativ
 
 ## Criterios para devolver la revisión
 
-Reproducir la traza de Arequipa y su sensibilidad presupuestal, comprobar Callao con idéntico filtro para jugador y rival y acordar el origen de cada valor inicial. Las primeras pruebas del motor deberán cubrir cierre bisiesto, entrega y vencimiento el mismo día, competencia por una reserva, repetición de orden y equivalencia de pasos con pausa y velocidades distintas. Antigravity conserva la orquestación de Etapa 1 y revisa el ajuste de Callao y los vacíos de T-104.
+Reproducir la traza de Arequipa y su sensibilidad presupuestal, comprobar Ica–Pisco con idéntico filtro para jugador y rival y acordar el origen de cada valor inicial. Las primeras pruebas del motor deberán cubrir cierre bisiesto, entrega y vencimiento el mismo día, competencia por una reserva, repetición de orden y equivalencia de pasos con pausa y velocidades distintas. Antigravity revisará el cambio del tutorial y los vacíos de T-104 a su regreso.
