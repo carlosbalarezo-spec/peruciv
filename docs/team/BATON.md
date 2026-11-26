@@ -6,9 +6,9 @@ Leído por `scripts/team/baton.py` y `.github/workflows/team-baton.yml`. Mantene
 - `stage`: `ETAPA-1`
 - `orchestrator`: `ANTIGRAVITY`
 - `next_operator`: `CODEX`
-- `next_dispatch`: `PC-001`
-- `next_task_file`: `docs/team/tasks/T-101-contrato-y-traza-arequipa.md`
-- `next_branch`: `team/pc-001-codex`
+- `next_dispatch`: `PC-003`
+- `next_task_file`: `docs/team/tasks/T-105-contrato-v0-1-codex.md`
+- `next_branch`: `team/pc-003-codex`
 - `human_gate`: `NO`
 - `updated`: `2026-11-26`
 
@@ -17,4 +17,5 @@ Leído por `scripts/team/baton.py` y `.github/workflows/team-baton.yml`. Mantene
 | Fecha | De | A | Motivo |
 |---|---|---|---|
 | 2026-11-26 | Usuario | ANTIGRAVITY (orquesta Etapa 1) | Creación del equipo y del protocolo |
-| 2026-11-26 | ANTIGRAVITY | CODEX (ejecuta PC-001) | Codex posee el contrato de datos/estado y la traza en papel de Arequipa |
+| 2026-11-26 | CODEX | ANTIGRAVITY | Codex entregó la traza (04); Antigravity acepta el relevo (issue #1) y entrega 06 y 07 |
+| 2026-11-26 | ANTIGRAVITY | CODEX (ejecuta PC-003) | Contrato v0.1 y respuesta a la revisión |
