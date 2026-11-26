@@ -16,6 +16,7 @@ import { renderToCanvas } from "../../js/render/snapshot.js";
 import { OCEAN_BG } from "../../js/render/map.js";
 import { createModel } from "../../js/ext/layers/model.js";
 import { makeLayers } from "../../js/ext/layers/layers.js";
+import { loadWonderAtlas } from "../../js/render/art/wonderAtlas.js";
 import { buildModel, placeDistricts } from "../../js/ext/cityView/model.js";
 import { cityDistricts, badgeOf } from "../../js/ext/cityView/districts.js";
 import { createMapLayer } from "../../js/ext/cityView/mapLayer.js";
@@ -32,7 +33,7 @@ async function json(base, name) {
 export async function loadStage(base = "../data/") {
   const names = ["world", "cities", "nation", "lenses", "sources", "resources", "states", "infrastructure", "military",
     "wonders", "trade", "districts", "citizens"];
-  const vals = await Promise.all(names.map((n) => json(base, n)));
+  const [vals] = await Promise.all([Promise.all(names.map((n) => json(base, n))), loadWonderAtlas()]);
   const data = Object.fromEntries(names.map((n, i) => [n, vals[i]]));
   const w = prepareWorld(data.world, data.cities, { resources: data.resources });
   const cityById = new Map(data.cities.map((c) => [c.id, c]));

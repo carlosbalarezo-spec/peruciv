@@ -11,7 +11,8 @@ import { lodFor } from "../js/render/art/lod.js";
 import { drawIcon, ICON_IDS, ALIASES } from "../js/icons.js";
 import { drawBanners } from "../js/render/banners.js";
 import { drawPort, drawAirport, drawTradeMarker, MODE_STYLE } from "../js/render/art/improvements.js";
-import { drawFort, drawWonder, drawPlaque, WONDER_MOTIFS, MOTIF_LABELS } from "../js/render/art/sites.js";
+import { drawFort, drawWonder, drawPlaque } from "../js/render/art/sites.js";
+import { loadWonderAtlas } from "../js/render/art/wonderAtlas.js";
 import { drawCitizen, citizenSVG, CITIZEN_KINDS, CITIZEN_ROWS } from "../js/render/art/people.js";
 import { createModel, SITE_RULES } from "../js/ext/layers/model.js";
 import { makeLayers } from "../js/ext/layers/layers.js";
@@ -502,10 +503,10 @@ function sceneLayerData(w) {
   };
   const wonders = {
     rules: [], wonders: [
-      site(at(3, 23), { id: "nps-X", name: "Snowcap National Park", short: "Snowcap", kind: "natural", rule: "national_park", rank: 1,
+      site(at(3, 23), { id: "sernanp-huascaran", name: "Parque Nacional Huascarán", short: "Huascarán", kind: "natural", rule: "national_park", rank: 1,
         metrics: {}, cells: [at(2, 23), at(3, 22), at(3, 23), at(4, 23), at(3, 24)] }),
-      site(at(12, 19), { id: "univ-1", name: "Capitol University", short: "Capitol U.", kind: "university", rule: "research_university", rank: 4, metrics: {} }),
-      site(at(9, 12), { id: "nhl-1", name: "Old Memorial", short: "Old Memorial", kind: "landmark", rule: "landmark", rank: 2, metrics: {}, curated: true }),
+      site(at(12, 19), { id: "sunedu-003", name: "Universidad Nacional de San Antonio Abad del Cusco", short: "UNSAAC", kind: "university", rule: "research_university", rank: 4, metrics: {} }),
+      site(at(9, 12), { id: "mincetur-machu-picchu", name: "Santuario Histórico de Machu Picchu", short: "Machu Picchu", kind: "landmark", rule: "landmark", rank: 2, metrics: {}, curated: true }),
     ],
   };
   const trade = {
@@ -540,7 +541,10 @@ function renderLayers() {
   }
 }
 
-function renderSites() {
+async function renderSites() {
+  const response = await fetch("../data/wonders.json");
+  if (!response.ok) throw new Error(`wonders.json: HTTP ${response.status}`);
+  const { wonders } = await response.json();
   const sec = section("sites", "Sitios y maravillas",
     "Glifos de sitios en los cuatro niveles de zoom: bases militares, maravillas por motivo, puertos, aeropuertos y placas.");
   const grass = "rgb(150,170,92)";
@@ -553,12 +557,7 @@ function renderSites() {
       { label: "reserve site", kind: "fort", f: "reserve", tier: "site" }, { label: "joint", kind: "fort", f: "army", tier: "major", joint: true },
       { label: "caretaker", kind: "fort", f: "air", tier: "base", muted: true },
     ] },
-    { name: "Wonders", items: [
-      // every motif once, under the kind that uses it on the map (ext/layers/model.js WONDER_MOTIF_BY_ID)
-      ...Object.entries(WONDER_MOTIFS).flatMap(([k, motifs]) =>
-        motifs.filter((mo) => k !== "natural" || !["obelisk"].includes(mo)).filter((mo) => k !== "landmark" || !["dam", "obelisk"].includes(mo))
-          .map((mo, j) => ({ label: MOTIF_LABELS[mo] || mo, kind: "wonder", w: k, motif: mo, rank: j === 0 ? 1 : 9 }))),
-    ] },
+    { name: "Maravillas", items: wonders.map((w) => ({ label: w.short, kind: "wonder", w: w.kind, id: w.id, rank: w.rank })) },
     { name: "Ports & airports", items: [
       ...[0, 1, 2].map((t) => ({ label: `port tier ${t}`, kind: "port", tier: t, type: "coastal" })),
       { label: "Great Lakes", kind: "port", tier: 1, type: "great_lakes" }, { label: "river port", kind: "port", tier: 2, type: "inland" },
@@ -594,7 +593,7 @@ function renderSites() {
           drawFort(ctx, it.f, 0, 0, px2 / s, { tier: it.tier, joint: it.joint, muted: it.muted, coastal: it.coastal !== false, airfield: !!it.airfield });
         } else if (it.kind === "wonder") {
           px2 = SITE_RULES.wonder.size(it.rank, Rpx);
-          drawWonder(ctx, it.w, 0, 0, px2 / s, { motif: it.motif, rank: it.rank });
+          drawWonder(ctx, it.w, 0, 0, px2 / s, { id: it.id, rank: it.rank });
         } else if (it.kind === "port") {
           px2 = SITE_RULES.port.size(it.tier, Rpx);
           drawPort(ctx, 0, 0, px2 / s, { tier: it.tier, type: it.type });
@@ -612,9 +611,9 @@ function renderSites() {
   // plaques
   const ctx = makeCanvas(tierBlock(sec, "Plaques", "drawPlaque at scale 1 and 1.2"), 640, 60);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  drawPlaque(ctx, "Great Smoky Mountains", 110, 8, { kind: "natural" });
-  drawPlaque(ctx, "Johns Hopkins", 290, 8, { kind: "university", scale: 1.2 });
-  drawPlaque(ctx, "Statue of Liberty", 450, 8, { kind: "landmark" });
+  drawPlaque(ctx, "Huascarán", 110, 8, { kind: "natural" });
+  drawPlaque(ctx, "UNSAAC", 290, 8, { kind: "university", scale: 1.2 });
+  drawPlaque(ctx, "Machu Picchu", 450, 8, { kind: "landmark" });
   drawPlaque(ctx, "Fort Bragg", 580, 8, { kind: "fort" });
 }
 
@@ -661,7 +660,7 @@ async function renderAll() {
   const main = document.getElementById("gallery");
   main.innerHTML = '<p class="muted" id="status">Renderizando…</p>';
   const t0 = performance.now();
-  const steps = [renderTerrain, renderScene, renderCities, renderWater, renderLayers, renderSites, renderCitizens, renderIcons, renderBanners];
+  const steps = [renderTerrain, renderScene, renderCities, renderWater, loadWonderAtlas, renderLayers, renderSites, renderCitizens, renderIcons, renderBanners];
   for (const step of steps) {
     try {
       await step();

@@ -9,6 +9,7 @@
 import { createModel } from "./model.js";
 import { makeLayers } from "./layers.js";
 import { tips } from "./tips.js";
+import { loadWonderAtlas } from "../../render/art/wonderAtlas.js";
 
 const TOGGLES = [
   { id: "roads", label: "Carreteras", icon: "t-road", def: true, title: "Panamericana, Longitudinal de la Sierra, Interoceánica y vías principales", layers: ["roads"] },
@@ -24,6 +25,7 @@ export function install(app) {
   const on = Object.fromEntries(TOGGLES.map((t) => [t.id, t.def]));
   const layers = makeLayers(model, on, { tips, app });
   for (const l of layers) app.registerStaticLayer(l);
+  const atlasReady = loadWonderAtlas();
 
   for (const t of TOGGLES) {
     app.ui.addMapToggle({
@@ -36,7 +38,8 @@ export function install(app) {
     });
   }
 
-  const apply = (name, data) => {
+  const apply = async (name, data) => {
+    if (name === "wonders") await atlasReady;
     model.setData(name, data);
     app.requestDraw();
   };

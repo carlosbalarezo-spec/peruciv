@@ -122,6 +122,8 @@ export function drawStatic(ctx, vp, w, opts) {
 
   // Registered static layers, by z (stable), drawn by upTo(z) before each built-in step.
   const layers = (opts.layers || []).filter((l) => layerActive(l, Rpx)).sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+  const wonders = layers.find((layer) => layer.id === "wonders")?.list?.(Rpx) || [];
+  const wonderCells = new Set(wonders.map((site) => site.drawCell));
   let nextLayer = 0;
   let lo = null;
   const upTo = (z) => {
@@ -186,7 +188,10 @@ export function drawStatic(ctx, vp, w, opts) {
   // 4. Biome + relief glyphs (terrain view only, readable sizes only).
   lap("grid");
   upTo(Z.GLYPHS);
-  if (!opts.lens && Rpx > GLYPHS_MIN_RPX) drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod });
+  if (!opts.lens && Rpx > GLYPHS_MIN_RPX) {
+    const terrainCells = wonderCells.size ? cells.filter((i) => !wonderCells.has(i)) : cells;
+    drawTerrainGlyphs(ctx, terrainCells, w, { Rpx, s, lod });
+  }
   lap("glyphs");
 
   // 5. Rivers and borders, clipped to the world rectangle.
@@ -213,7 +218,7 @@ export function drawStatic(ctx, vp, w, opts) {
   // 8. Screen-space bits: resources, then the big state names.
   upTo(Z.RESOURCES);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const placed = opts.showResources && w.resources ? drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, opts.resourceFilter) : [];
+  const placed = opts.showResources && w.resources ? drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, opts.resourceFilter, wonderCells) : [];
   if (opts.hits) opts.hits.resources = placed;
   lap("resources");
   upTo(Z.LABELS);
@@ -359,6 +364,7 @@ const RESOURCE_OVERVIEW_PER_STATE = 2;
 const RES_SLOTS = {
   free: [[[0, 0.08]], [[-0.36, 0.12], [0.36, 0.12]], [[-0.4, 0.22], [0.4, 0.22], [0, -0.34]]],
   city: [[[0.46, 0.4]], [[0.46, 0.4], [-0.46, 0.4]], [[0.46, 0.4], [-0.46, 0.4], [0, 0.66]]],
+  wonder: [[[-0.56, -0.4]], [[-0.56, -0.4], [0.56, -0.4]], [[-0.56, -0.4], [0.56, -0.4], [0, -0.7]]],
 };
 
 /** Icon diameter (css px) for a resource at this zoom; very large sites get a boost. */
@@ -422,7 +428,7 @@ export function resourceFilterSig(f) {
   return `${f.types ? [...f.types].sort().join(",") : "*"}|${f.minValue ?? ""}`;
 }
 
-function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec = null) {
+function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec, wonderCells) {
   if (Rpx < RESOURCE_OVERVIEW_MIN_RPX) return [];
   const filter = resourcePredicate(filterSpec);
   const overview = Rpx < RESOURCE_MIN_RPX ? overviewItems(w, filter, resourceFilterSig(filterSpec)) : null;
@@ -459,7 +465,8 @@ function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec = null) {
   const draws = [], extras = [];
   for (const [i, list] of cells) {
     const n = Math.min(perCell, list.length);
-    const slots = overview ? [[0, 0]] : RES_SLOTS[w.cityByCell.has(i) ? "city" : "free"][n - 1];
+    const layout = w.cityByCell.has(i) ? "city" : wonderCells.has(i) ? "wonder" : "free";
+    const slots = overview ? [[0, 0]] : RES_SLOTS[layout][n - 1];
     let shown = 0, last = null;
     for (let k = 0; k < n; k++) {
       const it = list[k];

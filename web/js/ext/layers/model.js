@@ -231,11 +231,15 @@ function place(m) {
     it.k = Math.min(isCity ? 0.72 : 1, n >= 3 ? 0.6 : n === 2 ? 0.74 : 1);
     let t = taken.get(cell);
     if (!t) taken.set(cell, (t = new Set()));
-    const centreFree = !isCity && !(res && res.get(cell)?.length) && !t.has(-1);
+    // Two wonders can share one coarse hex (Moray and Ollantaytambo). Place each toward
+    // its surveyed position so their miniatures remain separately visible and selectable.
+    const sharedWonder = it.kind === "wonder" && n > 1;
+    const centreFree = !sharedWonder && !isCity && !(res && res.get(cell)?.length) && !t.has(-1);
     let slot = -1;
     if (!centreFree) {
       // lean toward the true point (for a moved site: toward the city it belongs to)
-      const pref = it.nudged ? (Math.atan2(grid.cy(it.cell) - grid.cy(cell), grid.cx(it.cell) - grid.cx(cell)) * 180) / Math.PI : it.pref ?? 90;
+      const localPref = sharedWonder ? towards(m.w, it.data, it.pref) : it.pref;
+      const pref = it.nudged ? (Math.atan2(grid.cy(it.cell) - grid.cy(cell), grid.cx(it.cell) - grid.cx(cell)) * 180) / Math.PI : localPref ?? 90;
       let best = -1, bestD = Infinity;
       RING.forEach(([, , deg], k) => {
         if (t.has(k)) return;

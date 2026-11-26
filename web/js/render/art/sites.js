@@ -1,6 +1,6 @@
 // Sites on hexes: military installations as forts, restricted ground (the big training and test ranges), wonder
 // tiles (national parks, research universities, landmarks), protected land around big parks, and wonder plaques.
-// All original art drawn in code; painted once per (kind, size bucket) into sprites (render/art/sprites.js) and
+// Illustrated wonders and procedural art are painted once per (motif, size bucket) into sprites (render/art/sprites.js) and
 // stamped into the CACHED static map by ext/layers/ (never per frame).
 //
 //   FORT_KINDS, fortKind(component) → "army" | "navy" | "air" | "marines" | "guard" | "air_guard" | "reserve" | "other"
@@ -11,6 +11,7 @@
 //   WONDER_KINDS, WONDER_MOTIFS, MOTIF_LABELS, drawWonder(ctx, kind, x, y, size, {rank, motif, variant})
 //   drawPlaque(ctx, text, x, y, {kind, sub, scale})              screen-space name plate (css px)
 import { bucketPx, deviceScale, getSprite, drawSprite, makePattern } from "./sprites.js";
+import { wonderAtlasCell, paintWonderCell } from "./wonderAtlas.js";
 
 const TAU = Math.PI * 2;
 
@@ -468,6 +469,7 @@ export function drawProtected(ctx, sets, vp, o) {
 
 export const WONDER_KINDS = {
   natural: { name: "Natural wonder", ring: "#8fd07a", base: "#3f6a34", icon: "w-park" },
+  coastal: { name: "Maravilla costera", ring: "#8edac9", base: "#397c79", icon: "w-park" },
   university: { name: "Great university", ring: "#8fb8ec", base: "#2c4a78", icon: "w-university" },
   landmark: { name: "Landmark", ring: "#ecc46a", base: "#6a4a1c", icon: "w-landmark" },
 };
@@ -488,17 +490,26 @@ export const MOTIF_LABELS = {
   ballpark: "Ballpark", brickhall: "Brick hall", rotunda: "Rotunda", carved: "Carved mountain", quarter: "Old quarter",
   flight: "First flight", spike: "Golden spike", memorial: "Memorial arch",
 };
-const FALLBACK = { natural: ["peak", "forest", "canyon"], university: ["hall", "redhall", "spire"], landmark: ["obelisk", "memorial", "rotunda"] };
+const FALLBACK = { natural: ["peak", "forest", "canyon"], coastal: ["coast", "coast", "coast"], university: ["hall", "redhall", "spire"], landmark: ["obelisk", "memorial", "rotunda"] };
 
 /**
- * A wonder tile: a raised round plinth with a gold rim (the wonder "seal"), and the wonder itself on top, drawn from
- * its `motif` (see WONDER_MOTIFS). Without a motif, `variant` picks one of three generic ones for the kind.
+ * Paint the site's illustrated landscape by catalogue id. Uncatalogued sites and unavailable artwork use
+ * a procedural motif on a plinth. Both paths use the same anchor, sprite cache and rank indicator.
  */
-export function drawWonder(ctx, kind, x, y, size, { variant = 0, rank = null, motif = null } = {}) {
+export function drawWonder(ctx, kind, x, y, size, { id, variant = 0, rank = null, motif = null } = {}) {
   const fb = FALLBACK[kind] || FALLBACK.landmark;
   const mo = motif && MOTIF_LABELS[motif] ? motif : fb[((variant % 3) + 3) % 3];
   const top = rank != null && rank <= 3 ? 1 : 0;
-  stamp(ctx, `site:wonder:${kind}:${mo}:${top}`, x, y, size, { x0: -1.2, y0: -1.45, x1: 1.2, y1: 1.1 }, (g, upx) => paintWonder(g, upx, kind, mo, top));
+  const cell = wonderAtlasCell(id);
+  stamp(ctx, `site:wonder:${kind}:${cell ?? mo}:${top}`, x, y, size, { x0: -1.2, y0: -1.45, x1: 1.2, y1: 1.1 }, (g, upx) => {
+    if (cell !== undefined) {
+      paintWonderCell(g, cell);
+    } else {
+      plinth(g, upx, WONDER_KINDS[kind] || WONDER_KINDS.landmark, top);
+      (MOTIF_PAINT[mo] || MOTIF_PAINT.obelisk)(g, upx);
+    }
+    if (top) paintRankStar(g, upx);
+  });
 }
 
 function plinth(g, upx, pal, top) {
@@ -522,18 +533,12 @@ function plinth(g, upx, pal, top) {
   ink(g, upx, 0.7, "rgba(40,26,6,.8)");
 }
 
-function paintWonder(g, upx, kind, motif, top) {
-  const pal = WONDER_KINDS[kind] || WONDER_KINDS.landmark;
-  plinth(g, upx, pal, top);
-  (MOTIF_PAINT[motif] || MOTIF_PAINT.obelisk)(g, upx);
-  if (top) {
-    // a small gold star for the top three of a rule
-    g.beginPath();
-    star(g, 0.82, -1.18, 0.2, 5, 0.45);
-    g.fillStyle = "#f2d27a";
-    g.fill();
-    ink(g, upx, 0.8, "rgba(60,40,6,.9)");
-  }
+function paintRankStar(g, upx) {
+  g.beginPath();
+  star(g, 0.82, -1.18, 0.2, 5, 0.45);
+  g.fillStyle = "#f2d27a";
+  g.fill();
+  ink(g, upx, 0.8, "rgba(60,40,6,.9)");
 }
 
 function pine(g, upx, x, y, h, col = "#2f5a32") {
