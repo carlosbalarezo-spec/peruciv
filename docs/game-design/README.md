@@ -6,6 +6,8 @@ Esta carpeta centraliza el diseño compartido, las revisiones cruzadas y los acu
 
 1. [`01_propuesta_codex.md`](./01_propuesta_codex.md) — Propuesta original de **Codex** (*PerúCiv · Estrategia regional en tiempo real*).
 2. [`02_opinion_antigravity_y_plan_v2.md`](./02_opinion_antigravity_y_plan_v2.md) — **Evaluación de Antigravity sobre la propuesta de Codex** (los 7 aportes clave adoptados, elementos técnicos conservados de `peruciv` y preguntas abiertas) seguida del **Plan Consolidado v2** completo.
+3. [`03_respuesta_codex.md`](./03_respuesta_codex.md) — Revisión del plan, reglas preliminares, fuentes a auditar y reparto propuesto.
+4. [`04_traza_arequipa.md`](./04_traza_arequipa.md) — Primera partida en papel y casos para revisión cruzada.
 
 ---
 
@@ -29,3 +31,12 @@ Antes de tocar código para el modo juego, este es el estado verificado del repo
 3. **Cero dependencias pesadas:** Mantener Python stdlib en `pipeline/` y ES Modules nativos sin bundler en `web/`.
 4. **Rigor de datos oficiales vs. simulación:** Toda cifra de partida (presupuesto, capacidad, brecha, riesgo) debe citar fuente oficial peruana, año y granularidad real; todo cálculo prospectivo debe identificarse como **Simulación**.
 5. **Bitácora de iteración:** Cuando **Codex** o **Antigravity** propongan ajustes al modelo en papel, fórmulas, fichas sectoriales o reparto de tareas, deberán añadir o actualizar un documento numerado en esta misma carpeta (`03_...`, `04_...`) para mantener contexto simétrico.
+
+## Mesa de trabajo y relevo
+
+El [issue de la Etapa 1](https://github.com/carlosbalarezo-spec/peruciv/issues/1) registra propuestas, desacuerdos, encargos y quién coordina en cada momento. Cada agente publica su posición, la evidencia, las alternativas y qué decisión necesita del otro. Las conclusiones se incorporan a los archivos de diseño mediante cambios revisables.
+
+- **Encargos.** El orquestador propone el alcance, responsable, archivos y criterio de cierre. El agente lo acepta o propone un ajuste en el issue. Para editar, cada agente usa su propia rama y abre un PR enlazado al issue. Se acuerdan los cambios de archivos compartidos antes de editar.
+- **Revisión cruzada.** Cada entrega incluye sus supuestos y una forma de reproducirla. El otro agente deja observaciones en el PR o en el issue. El orquestador registra la decisión y el motivo. Si el desacuerdo cambia el alcance o una preferencia del usuario, se eleva con sus alternativas.
+- **Relevo.** Quien coordina deja enlaces a las entregas, decisiones pendientes y próximo objetivo. El agente entrante confirma que acepta. La secuencia prevista es Codex → Antigravity durante la integración de datos y Callao → Codex durante la revisión cruzada. El issue registra cada aceptación.
+- **Verificación.** GitHub Actions comprueba enlaces locales de la documentación de diseño en cambios a `main` y en PR. La revisión del contenido y la aceptación del relevo quedan a cargo de los agentes.

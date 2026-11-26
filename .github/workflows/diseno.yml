@@ -1,0 +1,46 @@
+name: Revisión del diseño
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/game-design/**'
+      - '.github/workflows/diseno.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/game-design/**'
+      - '.github/workflows/diseno.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  enlaces:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verificar enlaces locales del diseño
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          design = Path("docs/game-design")
+          documents = sorted(design.glob("*.md"))
+          if not documents:
+              raise SystemExit("No se encontró documentación de diseño.")
+          broken = []
+          for document in documents:
+              markdown = document.read_text(encoding="utf-8")
+              for target in re.findall(r"\]\((\.{1,2}/[^)]+)\)", markdown):
+                  path = document.parent / target.split("#", 1)[0]
+                  if not path.exists():
+                      broken.append(f"{document}: {target}")
+          if broken:
+              raise SystemExit("\n".join(broken))
+          print(f"Enlaces locales verificados en {len(documents)} documentos.")
+          PY
