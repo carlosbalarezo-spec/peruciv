@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Renderizador de tráiler — peruciv (dev)</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --ink: #efe4c6; --ink-dim: #b9ab88; --gold: #c9a45c; --gold-bright: #ecd08e; --bg: #0b1520; --card: #121d29;
+      --serif: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      --sans: -apple-system, "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 var(--sans); }
+    header {
+      position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 16px;
+      background: linear-gradient(180deg, #24364a, #131e2a); border-bottom: 1px solid var(--gold);
+    }
+    header h1 { margin: 0; font: normal 17px var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); }
+    header a { color: var(--gold-bright); font-size: 12px; }
+    button { font: 12px var(--serif); color: var(--gold-bright); background: linear-gradient(180deg, #3a5068, #223244); border: 1px solid var(--gold); border-radius: 4px; padding: 4px 12px; cursor: pointer; }
+    button:disabled { opacity: .45; cursor: default; }
+    label { font-size: 12px; color: var(--ink-dim); display: inline-flex; align-items: center; gap: 4px; }
+    input[type=range] { width: min(520px, 60vw); }
+    main { padding: 12px 16px 40px; }
+    #preview { display: block; width: 100%; max-width: 1280px; height: auto; aspect-ratio: 16 / 9; background: #000; border: 1px solid rgba(201,164,92,.4); }
+    #status { margin: 8px 0; color: var(--ink-dim); min-height: 1.4em; }
+    #status.err { color: #f08a6a; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 8px 0; }
+    p.note { color: var(--ink-dim); max-width: 900px; }
+    code { color: var(--gold-bright); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tráiler</h1>
+    <button id="btn-render" disabled>Renderizar</button>
+    <button id="btn-download" disabled>Descargar MP4</button>
+    <button id="btn-test">Probar muxer MP4</button>
+    <label><input type="checkbox" id="opt-ss" checked> 2× supermuestreo</label>
+    <label><input type="checkbox" id="opt-sound" checked> Sonido</label>
+    <a href="art.html">Galería de arte</a>
+    <a href="../">← Mapa</a>
+  </header>
+  <main>
+    <canvas id="preview" width="1920" height="1080"></canvas>
+    <div class="row">
+      <label>Cuadro <input type="range" id="scrub" min="0" max="899" value="0" step="1"></label>
+      <span id="time">0.00 s</span>
+    </div>
+    <div id="status">Cargando datos…</div>
+    <p class="note">Renderiza el tráiler de presentación de 30 segundos cuadro por cuadro (1920×1080, 30 fps, H.264) usando el propio motor
+      y los datos oficiales de <code>peruciv</code> directamente en el navegador (WebCodecs + muxer MP4 puro, sin dependencias externas).</p>
+  </main>
+  <script type="module" src="trailer/main.js"></script>
+</body>
+</html>

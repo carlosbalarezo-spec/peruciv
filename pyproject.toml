@@ -1,0 +1,9 @@
+[project]
+name = "peruciv"
+version = "0.1.0"
+description = "Perú como un juego de estrategia, construido con datos públicos reales"
+requires-python = ">=3.11"
+dependencies = []  # solo biblioteca estándar de Python
+
+[tool.uv]
+package = false
