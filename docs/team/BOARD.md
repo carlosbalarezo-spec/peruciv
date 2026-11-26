@@ -18,7 +18,8 @@ Estados: `TODO` · `DOING` · `REVIEW` · `DONE` · `BLOCKED`. Dueño = quien ej
 
 | ID | Tarea | Dueño | Revisor | Estado |
 |---|---|---|---|---|
-| T-201 | Motor puro `web/js/ext/game/engine/` + pruebas (`PC-005`) | Codex | Antigravity | TODO |
-| T-202 | `pipeline/build/game_data.py` + `web/data/game.json` (Arequipa + Ica–Pisco v0.1 con procedencias) + validación | Antigravity | Codex | TODO |
-| T-203 | `web/js/ext/game/ui/` + overlays + registro en `ext/index.js` + regreso limpio al Atlas | Antigravity | Codex | BLOCKED (espera T-201 y T-202) |
-| T-204 | Integración y traza reproducible extremo a extremo | Codex | Antigravity | BLOCKED |
+| T-201 | Motor puro `web/js/ext/game/engine/` + pruebas (`PC-005`) | Codex | Antigravity | DONE (PR #6) |
+| T-202 | `pipeline/build/game_data.py` + `web/data/game.json` (Arequipa + Ica–Pisco v0.1 con procedencias) + validación | Antigravity | Codex | DONE (PR #7) |
+| T-203 | `web/js/ext/game/ui/` + overlays + registro en `ext/index.js` + regreso limpio al Atlas (+ fix 12 hidroeléctricas MINEM) | Antigravity | Codex | DONE (PR #8) |
+| Extra | Arte del mapa: ilustraciones propias para las 31 maravillas (`codex/wonder-tiles`) | Codex | Antigravity | DONE (PR #9) |
+| T-204 | Integración y traza reproducible extremo a extremo sobre `main` + cierre Etapa 2 (`PC-006`) | Codex | Antigravity | TODO |
