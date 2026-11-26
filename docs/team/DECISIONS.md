@@ -11,3 +11,7 @@
 | D-007 | 2026-11-26 | Orquestador rota por etapa: E1 Antigravity, E2 Codex, E3 Antigravityâ€¦ | Antigravity | Aceptada |
 | D-008 | 2026-11-26 | Los 22 territorios no simulados en el prototipo quedan como contexto geogrÃ¡fico; solo 2 rivales activos | Codex | Aceptada |
 | D-009 | 2026-11-26 | Despacho a Codex vÃ­a GitHub Actions (`team-baton.yml`); Antigravity se activa desde el IDE del usuario | Usuario / Antigravity | Aceptada |
+| D-010 | 2026-11-26 | Orquestación Etapa 1 la ejerce Antigravity desde la aceptación del relevo en el issue #1 | Antigravity | Aceptada |
+| D-011 | 2026-11-26 | La inspección de la oferta por etapas exige acceso habilitado antes del día 60 | Antigravity (a confirmar por Codex) | Propuesta |
+| D-012 | 2026-11-26 | O&M del acceso lo asume la municipalidad provincial; variante con O&M regional se corre como prueba | Antigravity (a confirmar por Codex) | Propuesta |
+| D-013 | 2026-11-26 | El secreto OPENAI_API_KEY no existe en peruciv: el despacho automático a Codex queda inactivo hasta que el usuario lo configure; mientras tanto el baton se lee en sesión | Antigravity | Vigente |

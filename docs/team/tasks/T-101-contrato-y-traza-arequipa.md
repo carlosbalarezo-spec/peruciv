@@ -5,7 +5,7 @@ Operator: `CODEX`
 Orquestador: Antigravity · Revisor: Antigravity
 
 ## Contexto
-Lee `docs/team/PROTOCOL.md`, `docs/team/DECISIONS.md` y tu propio `docs/game-design/03_respuesta_codex.md`. Antigravity aceptó tus propuestas (ver `docs/game-design/04_antigravity_respuesta_a_codex.md`).
+Lee `docs/team/PROTOCOL.md`, `docs/team/DECISIONS.md` y tu propio `docs/game-design/03_respuesta_codex.md`. Antigravity aceptó tus propuestas (ver `docs/game-design/05_antigravity_respuesta_a_codex.md`).
 
 ## Alcance (solo documentación, nada de código de producción)
 1. Crea `docs/game-design/05_contrato_game_json_v0_1.md`: esquema de `game.json` (bloques inmutables), estado guardado, orden de resolución diario, formato de órdenes y eventos explicables. Usa enteros para dinero y unidades físicas escaladas.
