@@ -1,4 +1,4 @@
-﻿# T-105 · Contrato `game.json` v0.1 y respuesta a la revisión de Antigravity
+# T-105 · Contrato `game.json` v0.1 y respuesta a la revisión de Antigravity
 
 Dispatch: `PC-003`
 Operator: `CODEX`
