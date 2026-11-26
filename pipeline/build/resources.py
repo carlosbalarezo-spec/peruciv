@@ -13,14 +13,21 @@ REQUIRES = ["_world", "peru_boundaries", "peru_socioeconomic", "minem_generation
 PRODUCES = ["_resources", "resources.json"]
 
 PLANT_COORDS: list[tuple[str, str, float, float, str]] = [
+    ("ANTUNEZ DE MAYOLO", "C.H. Santiago Antúnez de Mayolo (Mantaro)", -12.346, -74.685, "HUV"),
     ("MANTARO", "C.H. Santiago Antúnez de Mayolo (Mantaro)", -12.346, -74.685, "HUV"),
     ("RESTITUCION", "C.H. Restitución", -12.310, -74.665, "HUV"),
+    ("EL PLATANAL", "C.H. El Platanal", -12.956, -75.955, "LIM"),
     ("CHILCA", "C.T. Chilca Uno", -12.512, -76.736, "LIM"),
+    ("OLLEROS", "C.T. Santo Domingo de los Olleros", -12.505, -76.720, "LIM"),
     ("KALLPA", "C.T. Kallpa (Chilca)", -12.502, -76.742, "LIM"),
     ("FENIX", "C.T. Fénix Power (Chilca)", -12.525, -76.725, "LIM"),
     ("LAS FLORES", "C.T. Las Flores (Chilca)", -12.518, -76.730, "LIM"),
     ("VENTANILLA", "C.T. Ventanilla", -11.883, -77.129, "CAL"),
     ("SANTA ROSA", "C.T. Santa Rosa", -12.043, -77.018, "LIM"),
+    ("ETÉN", "C.T. Reserva Fría Eten", -6.912, -79.865, "LAM"),
+    ("ETEN", "C.T. Reserva Fría Eten", -6.912, -79.865, "LAM"),
+    ("AGUAYTÍA", "C.T. Aguaytía", -9.035, -75.505, "UCA"),
+    ("AGUAYTIA", "C.T. Aguaytía", -9.035, -75.505, "UCA"),
     ("CERRO DEL AGUILA", "C.H. Cerro del Águila", -12.238, -74.590, "HUV"),
     ("CHAGLLA", "C.H. Chaglla", -9.715, -75.875, "HUC"),
     ("HUINCO", "C.H. Huinco", -11.763, -76.617, "LIM"),
@@ -146,7 +153,7 @@ def build() -> None:
     for p in gen["plants"]:
         uname = p["name"].upper()
         orig = p["origin"].upper()
-        ptype = "hydro" if "HIDRO" in orig else "solar" if "SOLAR" in orig else "wind" if "EOLIC" in orig or "EÓLIC" in orig else "gas_plant"
+        ptype = "hydro" if ("HIDRO" in orig or "HIDRA" in orig) else "solar" if "SOLAR" in orig else "wind" if ("EOLIC" in orig or "EÓLIC" in orig) else "gas_plant"
         for sub, disp, lat, lon, dep in PLANT_COORDS:
             if sub in uname:
                 matched_mw[disp] += p["mw"]
