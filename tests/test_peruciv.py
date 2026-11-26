@@ -50,6 +50,14 @@ class TestPeruCiv(unittest.TestCase):
         fails = [msg for lv, msg in rep.lines if lv == "FAIL"]
         self.assertEqual(fails, [], f"pipeline check failed: {fails}")
 
+    def test_game_json_valid_and_provenance(self):
+        from pipeline.build import game_data
+        p = Path(WEB_DATA) / "game.json"
+        self.assertTrue(p.exists(), "Missing game.json")
+        res = game_data.check(Path(WEB_DATA))
+        self.assertTrue(any(lv == "PASS" for lv, _ in res), f"Unexpected game_data.check result: {res}")
+        self.assertFalse(any(lv == "FAIL" for lv, _ in res), f"game_data.check failed: {res}")
+
 
 if __name__ == "__main__":
     unittest.main()
