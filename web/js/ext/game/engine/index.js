@@ -1,4 +1,6 @@
 import { add, compareId, compatible, days, get, index, nonnegative } from "./data.js";
+import { dayOne, reprogramInheritedFunds } from "./day-one.js";
+import { applyOxi, createCiprl } from "./oxi.js";
 import { evaluateOffer } from "./offers.js";
 
 export { loadScenario, schemaVersion, rulesVersion } from "./data.js";
@@ -6,20 +8,24 @@ export { available, routeMinutes } from "./network.js";
 
 const bySequence = (a, b) => a.sequence - b.sequence || compareId(a, b);
 
-export function createState(scenario) {
+export function createState(scenario, { emphasis = "balanced" } = {}) {
+  const onboarding = dayOne(scenario, emphasis);
+  const inheritedFunds = index(onboarding.inherited?.funds);
+  const obligations = [...(scenario.obligations ?? []), ...(onboarding.inherited?.obligations ?? [])];
   const funds = scenario.funds.map(fund => ({
-    ...fund, reserved: 0, accrued: 0, spent: 0, maintenanceReserved: add(
-      ...(scenario.obligations ?? []).filter(item => item.fundId === fund.id).map(item => item.reserved ?? 0),
+    ...fund, balance: get(inheritedFunds, fund.id)?.available ?? fund.balance, reserved: 0, accrued: 0, spent: 0, maintenanceReserved: add(
+      ...obligations.filter(item => item.fundId === fund.id).map(item => item.reserved ?? 0),
     ),
   }));
   return structuredClone({
+    ...onboarding, ciprl: createCiprl(scenario),
     ...scenario.version, scenarioId: scenario.id, date: scenario.startDate,
     nextSequence: 0, nextEventSequence: 0, sealed: false,
     actors: scenario.actors ?? [], funds: index(funds), nodes: index(scenario.nodes), edges: index(scenario.edges),
     projects: Object.create(null), agreements: Object.create(null),
     offers: index(scenario.offers.map(offer => ({ id: offer.id, status: "pending" }))),
     access: Object.fromEntries(scenario.sites.map(site => [site.id, site.access === true])),
-    inspections: Object.create(null), reservations: [], obligations: scenario.obligations ?? [],
+    inspections: Object.create(null), reservations: [], obligations: structuredClone(obligations),
     pendingOrders: [], orderLog: [], closures: [], milestones: [],
   });
 }
@@ -65,7 +71,10 @@ const accepted = { accepted: true, reasonCode: "ACCEPTED", detail: {} };
 function checkFund(state, fundId, actorId, rubrics, amount) {
   const fund = get(state.funds, fundId);
   if (!fund || fund.actorId !== actorId || !rubrics.includes(fund.rubric)) {
-    return rejection("FUND_INELIGIBLE", { fundId: fundId ?? null });
+    return rejection("FUND_INELIGIBLE", {
+      fundId: fundId ?? null, rubric: fund?.rubric ?? null, eligibleRubrics: [...rubrics],
+      actorId, fundActorId: fund?.actorId ?? null,
+    });
   }
   if (margin(fund) < amount) {
     return rejection("INSUFFICIENT_FUNDS", {
@@ -81,8 +90,13 @@ function startWork(state, definition, order, registry) {
   if (definition.counterpartyId !== undefined && definition.counterpartyId !== payload.counterpartyId) {
     return rejection("COUNTERPARTY_MISMATCH");
   }
-  if (definition.requiresAgreement && get(state.agreements, definition.requiresAgreement)?.status !== "delivered") {
-    return rejection("AGREEMENT_REQUIRED");
+  const conditional = get(state.agreements, definition.requiresAgreementWhenSigned);
+  const agreementId = definition.requiresAgreement ?? conditional?.id;
+  if (agreementId && get(state.agreements, agreementId)?.status !== "delivered") {
+    return rejection("AGREEMENT_REQUIRED", { agreementId });
+  }
+  if (agreementId && definition.requiresAccessSiteId && get(state.access, definition.requiresAccessSiteId) !== true) {
+    return rejection("ACCESS_REQUIRED", { siteId: definition.requiresAccessSiteId });
   }
   const work = [...Object.values(state.projects), ...Object.values(state.agreements)];
   if (definition.teamId && work.some(item => item.teamId === definition.teamId && item.teamUntil > state.date)) {
@@ -139,6 +153,32 @@ function startWork(state, definition, order, registry) {
 function applyOrder(state, scenario, order) {
   const { projectId, agreementId, siteId } = order.payload ?? {};
   switch (order.type) {
+    case "reserveOxi":
+    case "commitOxi":
+    case "issueCiprl":
+    case "cancelOxi":
+      return applyOxi(state, scenario, order, rejection, accepted);
+    case "allocateDayOne": {
+      if (state.date !== state.startDate) return rejection("DAY_ONE_CLOSED");
+      const { actionId, fundId, amount } = order.payload ?? {};
+      const action = (scenario.budgetActions ?? []).find(item => item.id === actionId);
+      if (!action || action.actorId !== order.actorId || action.authorizationMissing === true) {
+        return rejection("ACTOR_NOT_COMPETENT", {
+          actionId: actionId ?? null, competentActorId: action?.actorId ?? null,
+          legalBasis: action?.legalBasis ?? null,
+        });
+      }
+      if (!Number.isSafeInteger(amount) || amount <= 0) return rejection("INVALID_AMOUNT");
+      if (action.eligibleFundIds && !action.eligibleFundIds.includes(fundId)) {
+        return rejection("FUND_INELIGIBLE", { fundId: fundId ?? null, actionId, legalBasis: action.legalBasis ?? null });
+      }
+      const failure = checkFund(state, fundId, order.actorId, action.eligibleRubrics ?? [], amount);
+      if (failure) failure.detail.legalBasis = action.legalBasis ?? null;
+      if (failure) return failure;
+      state.funds[fundId].balance = add(state.funds[fundId].balance, -amount);
+      state.allocations.push({ actionId, fundId, amount, orderId: order.id });
+      return accepted;
+    }
     case "startProject":
       return startWork(state, scenario.projects.find(item => item.id === projectId), order, state.projects);
     case "signAgreement":
@@ -168,9 +208,10 @@ function closePeriod(state, type, emit) {
 }
 
 function openYear(state, scenario, emit) {
+  reprogramInheritedFunds(state, scenario);
   for (const effect of get(scenario.annualEffects ?? {}, state.date) ?? []) applyEffect(state, effect);
   for (const obligation of state.obligations) {
-    if (obligation.startDate > state.date) continue;
+    if (obligation.paid || obligation.startDate > state.date || obligation.dueYear > Number(state.date.slice(0, 4))) continue;
     const fund = get(state.funds, obligation.fundId);
     const amount = nonnegative(obligation.amount);
     const reserved = obligation.reserved ?? 0;
@@ -182,6 +223,7 @@ function openYear(state, scenario, emit) {
       continue;
     }
     obligation.reserved = 0;
+    if (obligation.dueYear !== undefined) obligation.paid = true;
     fund.maintenanceReserved = add(fund.maintenanceReserved, -reserved);
     fund.balance = add(fund.balance, -amount);
     fund.accrued = add(fund.accrued, amount);
@@ -210,16 +252,18 @@ function resolveMilestones(state, emit) {
   state.milestones = state.milestones.filter(item => item.date !== state.date);
 }
 
-function resolveOrders(state, orders, scenario, emit) {
+function resolveOrders(state, orders, scenario, emit, dayOneOnly) {
   const results = [];
   const seen = new Map(state.orderLog.map(entry => [entry.order.id, entry.result]));
-  const sequences = new Set();
-  const ordered = [...state.pendingOrders, ...orders].sort((a, b) => {
+  const sequences = new Set(state.orderLog.filter(entry => entry.date === state.date &&
+    entry.result.reasonCode !== "INVALID_ORDER_SEQUENCE" && entry.result.reasonCode !== "ORDER_DATE_MISMATCH")
+    .map(entry => entry.order.sequence));
+  const ordered = [...(dayOneOnly ? [] : state.pendingOrders), ...orders].sort((a, b) => {
     const left = Number.isSafeInteger(a.sequence) ? a.sequence : Infinity;
     const right = Number.isSafeInteger(b.sequence) ? b.sequence : Infinity;
     return left === right ? compareId(a, b) : left < right ? -1 : 1;
   });
-  state.pendingOrders = [];
+  if (!dayOneOnly) state.pendingOrders = [];
   for (const order of ordered) {
     index([order]);
     if (seen.has(order.id)) {
@@ -234,9 +278,10 @@ function resolveOrders(state, orders, scenario, emit) {
     } else {
       sequences.add(order.sequence);
       state.nextSequence = Math.max(state.nextSequence, add(order.sequence, 1));
-      result = applyOrder(state, scenario, order);
+      result = dayOneOnly && order.type !== "allocateDayOne"
+        ? rejection("DAY_ONE_ORDER_REQUIRED") : applyOrder(state, scenario, order);
     }
-    state.orderLog.push({ date: state.date, order, result });
+    state.orderLog.push({ date: state.date, order, result, ...(dayOneOnly ? { dayOneOnly } : {}) });
     seen.set(order.id, result);
     results.push({ id: order.id, ...result });
     emit(result.accepted ? "ORDER_ACCEPTED" : "ORDER_REJECTED", order.id, result.reasonCode, result.detail, [order.id]);
@@ -244,8 +289,9 @@ function resolveOrders(state, orders, scenario, emit) {
   return results;
 }
 
-export function step(previous, orders, scenario) {
+export function step(previous, orders, scenario, { dayOneOnly = false } = {}) {
   compatible(previous, { ...scenario.version, scenarioId: scenario.id });
+  if (previous.startDate !== undefined) compatible(previous, { startDate: scenario.startDate });
   if (previous.sealed) {
     return { state: structuredClone(previous), events: [], results: orders.map(order => ({
       id: order.id, ...(previous.orderLog.find(entry => entry.order.id === order.id)?.result ??
@@ -261,6 +307,11 @@ export function step(previous, orders, scenario) {
       type, subjectId, reasonCode, detail: structuredClone(detail), causes: [...causes] });
   }
 
+  if (dayOneOnly) {
+    const results = resolveOrders(state, structuredClone(orders), scenario, emit, true);
+    return { state, events, results: structuredClone(results) };
+  }
+
   const scheduled = scenario.events.filter(event => event.date === state.date).sort(bySequence);
   for (const event of scheduled) {
     for (const effect of event.effects) applyEffect(state, effect);
@@ -268,6 +319,7 @@ export function step(previous, orders, scenario) {
   }
   if (state.reprogramYear) openYear(state, scenario, emit);
 
+  resolveMilestones(state, emit);
   const results = resolveOrders(state, structuredClone(orders), scenario, emit);
   resolveMilestones(state, emit);
 
@@ -302,6 +354,7 @@ export function save(state) {
 export function load(saved, scenario) {
   const state = JSON.parse(saved);
   compatible(state, { ...scenario.version, scenarioId: scenario.id });
+  if (state.startDate !== undefined) compatible(state, { startDate: scenario.startDate });
   if (state.date < scenario.startDate || state.date > scenario.endDate) throw new Error("Fecha fuera del escenario");
   days(state.date, 0);
   if (!Array.isArray(state.orderLog) || !Array.isArray(state.pendingOrders)) throw new Error("Registro de órdenes inválido");
@@ -309,17 +362,23 @@ export function load(saved, scenario) {
 }
 
 // Cada entrada usa el día en que fue procesada, incluso si la fecha de la orden fue rechazada.
-export function replay(scenario, orderLog, until = scenario.endDate) {
+export function replay(scenario, orderLog, until = scenario.endDate, options) {
   days(until, 0);
-  let state = createState(scenario);
+  let state = createState(scenario, options);
   const byDate = new Map();
   for (const entry of orderLog) {
     if (!byDate.has(entry.date)) byDate.set(entry.date, []);
-    byDate.get(entry.date).push(entry.order);
+    byDate.get(entry.date).push(entry);
   }
   const events = [];
   while (!state.sealed && state.date <= until) {
-    const result = step(state, byDate.get(state.date) ?? [], scenario);
+    const entries = byDate.get(state.date) ?? [];
+    for (const entry of entries.filter(item => item.dayOneOnly)) {
+      const adjustment = step(state, [entry.order], scenario, { dayOneOnly: true });
+      state = adjustment.state;
+      events.push(...adjustment.events);
+    }
+    const result = step(state, entries.filter(item => !item.dayOneOnly).map(item => item.order), scenario);
     state = result.state;
     for (const event of result.events) events.push(event);
   }
