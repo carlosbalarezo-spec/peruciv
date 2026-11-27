@@ -143,6 +143,7 @@ function handleOnboardingAction(kind, val, ctx) {
   if (kind === "start-flashback") return startFlashbackLoop(session, stopFlash, renderAll);
   if (kind === "skip-flashback") { stopFlash(); session.phase = "emphasis"; return renderAll(); }
   if (kind === "pick-emphasis") { ob.emphasis = val; return renderAll(); }
+  if (kind === "explore-atlas") return app.setMode(null);
   if (kind === "begin-day1") {
     const reg = (session.dataset.regions || []).find((r) => r.id === ob.regionId);
     launchScenario(session, app, reg?.playableScenario || "arequipa-matarani", renderAll);
@@ -223,4 +224,8 @@ export async function install(app) {
     title: "Modo Juego (RTS): administra presupuesto, obras y ofertas regionales en tiempo real",
     onClick: () => app.setMode(app.mode === MODE ? null : MODE),
   });
+
+  if (!location.hash && !app.mode) {
+    queueMicrotask(() => app.setMode(MODE));
+  }
 }

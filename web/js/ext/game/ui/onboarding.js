@@ -71,6 +71,7 @@ export function renderOnboardingSetup(dataset, ob) {
     </select></div>
     ${renderRegionSummary(reg)}
     ${launchBtn}
+    <button type="button" class="gh-btn gm-act" data-ob="explore-atlas">Solo explorar el Atlas (sin partida)</button>
   </div>`;
 }
 
