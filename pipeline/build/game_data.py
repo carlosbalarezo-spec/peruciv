@@ -5,11 +5,26 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ..core.paths import WEB_DATA
+from ..core.paths import INTERIM, WEB_DATA
 from ..core.store import write_web
 
 REQUIRES = ["world.json", "states.json", "counties.json", "cities.json", "infrastructure.json"]
 PRODUCES = ["game.json"]
+
+LEVEL_MAP = {
+    "15": 1, "07": 1, "04": 1, "11": 1, "18": 1,
+    "23": 2, "08": 2, "02": 2, "13": 2, "20": 2, "14": 2,
+    "12": 3, "22": 3, "24": 3, "17": 3,
+    "06": 4, "21": 4, "03": 4, "05": 4, "19": 4, "10": 4,
+    "16": 5, "25": 5, "09": 5, "01": 5,
+}
+LEVEL_LABELS = {
+    1: "Nivel 1 · Consolidar",
+    2: "Nivel 2 · Conectar",
+    3: "Nivel 3 · Diversificar",
+    4: "Nivel 4 · Cerrar brechas",
+    5: "Nivel 5 · Integrar frontera",
+}
 
 SCHEMA_VERSION = "0.1"
 RULES_VERSION = "0.1"
@@ -35,12 +50,12 @@ def _sources() -> list[dict]:
         },
         {
             "id": "src-mef-ca",
-            "entity": "MEF — Consulta Amigable / Seguimiento de Proyectos",
-            "url": "https://mef.gob.pe/es/?Itemid=100944",
-            "table": "Presupuesto GORE/GL (pendiente extracción CSV en T-202b)",
+            "entity": "MEF — Seguimiento de Proyectos de Inversión (Datos Abiertos)",
+            "url": "https://fs.datosabiertos.mef.gob.pe/datastorefiles/2026-Seguimiento-PI.csv",
+            "table": "2026-Seguimiento-PI.csv (Gobiernos Regionales, 17,835 filas)",
             "period": "2026",
             "extractedAt": AS_OF,
-            "coverage": "Departamental / Provincial",
+            "coverage": "Nacional (25 Gobiernos Regionales)",
         },
         {
             "id": "src-sunass-ana",
@@ -350,9 +365,48 @@ def _scenarios() -> list[dict]:
     ]
 
 
+def _mef_interim() -> dict:
+    p = INTERIM / "mef_projects.json"
+    if not p.is_file():
+        return {}
+    return json.loads(p.read_text(encoding="utf-8")).get("data", {}).get("regions", {})
+
+
+def _regions_profile(states: list[dict], mef: dict) -> list[dict]:
+    out = []
+    for st in sorted(states, key=lambda s: s["fips"]):
+        fips = st["fips"]
+        lvl = LEVEL_MAP.get(fips, 3)
+        m = mef.get(fips) or {}
+        out.append({
+            "id": fips,
+            "abbr": st["abbr"],
+            "name": st["name"],
+            "level": lvl,
+            "levelLabel": LEVEL_LABELS[lvl],
+            "playableScenario": "arequipa-matarani" if fips == "04" else "ica-pisco-tutorial" if fips == "11" else None,
+            "mef2026": {
+                "pia": m.get("pia"),
+                "pim": m.get("pim"),
+                "dev": m.get("dev"),
+                "rubros": m.get("rubros", {}),
+                "topCui": m.get("top_cui", []),
+                "provenance": "oficial" if m else "supuesto",
+            },
+            "atlas": {
+                "population": st.get("population"),
+                "energyMw": (st.get("energy") or {}).get("total", 0),
+                "yields": st.get("yields", {}),
+            },
+        })
+    return out
+
+
 def build() -> None:
     world = _load_web("world.json")
+    states = _load_web("states.json")
     counties = _load_web("counties.json")
+    mef = _mef_interim()
     grid = world["grid"]
     world_ref = f"peruciv-grid-v{world.get('version', 2)}-{grid['cols']}x{grid['rows']}"
     territories, authorities = _territories_and_authorities()
@@ -368,12 +422,13 @@ def build() -> None:
         "observations": _observations(counties),
         "territories": territories,
         "authorities": authorities,
+        "regions": _regions_profile(states, mef),
         "networks": _networks(),
         "catalog": _catalog(),
         "scenarios": _scenarios(),
     }
     write_web("game.json", doc)
-    print(f"    {len(doc['scenarios'])} escenarios, {len(doc['observations'])} observaciones escritos en game.json")
+    print(f"    {len(doc['scenarios'])} escenarios, {len(doc['regions'])} regiones MEF, {len(doc['observations'])} observaciones escritos en game.json")
 
 
 def check(web_dir: Path) -> list[tuple[str, str]]:
