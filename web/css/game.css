@@ -76,3 +76,22 @@ body.dock-open #game-hud { left: calc(var(--dock-left, 0px) + (100vw - var(--doc
 .gm-log-item.bad { border-left-color: #e63946; }
 .gm-log-item.ok { border-left-color: #2a9d8f; }
 .gm-scen-btn { width: 100%; text-align: left; padding: 10px; margin-bottom: 8px; border-radius: 7px; }
+.gm-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.gm-field label { font-size: 11px; color: #b9ab88; text-transform: uppercase; letter-spacing: 0.04em; }
+.gm-input, .gm-select {
+  width: 100%; padding: 6px 8px; border-radius: 5px; font-size: 12.5px;
+  background: rgba(12, 20, 30, 0.92); color: #efe4c6; border: 1px solid rgba(201, 164, 92, 0.45);
+}
+.gm-flash {
+  text-align: center; padding: 18px 12px; border-radius: 8px;
+  background: radial-gradient(circle at top, rgba(58, 80, 104, 0.45), rgba(12, 20, 30, 0.95));
+  border: 1px solid rgba(201, 164, 92, 0.55); margin-bottom: 10px;
+}
+.gm-flash-ic { font-size: 36px; margin-bottom: 6px; }
+.gm-flash-title { font: 600 15px "Palatino Linotype", Georgia, serif; color: #ecd08e; margin: 0 0 6px; }
+.gm-guard {
+  margin-top: 8px; padding: 8px 10px; border-radius: 6px; font-size: 11.5px; line-height: 1.4;
+  background: rgba(214, 40, 40, 0.16); border: 1px solid rgba(255, 155, 155, 0.45); color: #ffd4d4;
+}
+.gm-guard.ok { background: rgba(42, 157, 143, 0.18); border-color: rgba(128, 237, 153, 0.45); color: #c6f6d5; }
+.gm-cui { font-size: 11px; padding: 4px 0; border-top: 1px dashed rgba(201, 164, 92, 0.16); color: #d8ccb0; }

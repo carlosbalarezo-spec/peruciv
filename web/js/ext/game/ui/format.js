@@ -24,24 +24,32 @@ const REASONS = {
   INSPECTION_REQUIRED: "Falta inspección técnica antes del plazo",
   EXPANSION_UNFUNDED: "Falta ampliación hídrica financiada a tiempo",
   OBSERVATION_UNKNOWN: "Dato oficial desconocido sin supuesto activo",
+  CIPRL_LIMIT_EXCEEDED: "Supera el margen libre del tope CIPRL",
+  OXI_STAGE_REQUIRED: "Etapa OxI inválida para esta operación",
+  OXI_DELIVERY_REQUIRED: "La obra asociada aún no ha sido entregada",
+  DAY_ONE_CLOSED: "La ventana de asignación del Día 1 ya cerró",
 };
 
 export const reasonText = (code) => REASONS[code] || code || "—";
 
+const EVENT_FMT = {
+  ORDER_ACCEPTED: (d, t) => ({ cls: "ok", text: `Orden aceptada${t ? `: ${t}` : ""}` }),
+  ORDER_REJECTED: (_d, _t, ev) => ({ cls: "bad", text: `Orden rechazada: ${reasonText(ev.reasonCode)}` }),
+  WORK_MILESTONE: (_d, t) => ({ cls: "ok", text: `Hito completado${t ? `: ${t}` : ""}` }),
+  OFFER_DECIDED: (d, t) => ({ cls: "ok", text: `Inversión adjudicada (${d.offerId || t}): ${d.siteId || ""} (${d.minutes ?? "?"} min)` }),
+  OFFER_AWARDED: (d, t) => ({ cls: "ok", text: `Inversión adjudicada (${d.offerId || t}): ${d.siteId || ""} (${d.minutes ?? "?"} min)` }),
+  OFFER_INELIGIBLE: (d, _t, ev) => ({ cls: "bad", text: `Sede ${d.siteId || ""} excluida (${d.offerId || ""}): ${reasonText(ev.reasonCode)}` }),
+  OFFER_UNAWARDED: (d, t) => ({ cls: "bad", text: `Oferta ${d.offerId || t} declarada desierta` }),
+  MONTH_CLOSED: (_d, _t, ev) => ({ cls: "", text: `Cierre mensual (${ev.date})` }),
+  YEAR_CLOSED: (_d, _t, ev) => ({ cls: "", text: `Cierre de ejercicio anual (${ev.date})` }),
+  MAINTENANCE_PAID: (d) => ({ cls: "", text: `Reserva de O&M aplicada (${fmtMoney(d.amount)})` }),
+  SCENARIO_ENDED: (_d, _t, ev) => ({ cls: "ok", text: `Fin de mandato (${ev.date})` }),
+};
+
 export function describeEvent(ev) {
   const d = ev.detail || {};
   const tag = d.projectId || d.agreementId || d.workId || d.siteId || d.offerId || ev.orderId || "";
-  if (ev.type === "ORDER_ACCEPTED") return { cls: "ok", text: `Orden aceptada${tag ? `: ${tag}` : ""}` };
-  if (ev.type === "ORDER_REJECTED") return { cls: "bad", text: `Orden rechazada: ${reasonText(ev.reasonCode)}` };
-  if (ev.type === "WORK_MILESTONE") return { cls: "ok", text: `Hito completado${tag ? `: ${tag}` : ""}` };
-  if (ev.type === "OFFER_DECIDED" || ev.type === "OFFER_AWARDED") {
-    return { cls: "ok", text: `Inversión adjudicada (${d.offerId || tag}): ${d.siteId || ""} (${d.minutes ?? "?"} min)` };
-  }
-  if (ev.type === "OFFER_INELIGIBLE") return { cls: "bad", text: `Sede ${d.siteId || ""} excluida (${d.offerId || ""}): ${reasonText(ev.reasonCode)}` };
-  if (ev.type === "OFFER_UNAWARDED") return { cls: "bad", text: `Oferta ${d.offerId || tag} declarada desierta` };
-  if (ev.type === "MONTH_CLOSED") return { cls: "", text: `Cierre mensual (${ev.date})` };
-  if (ev.type === "YEAR_CLOSED") return { cls: "", text: `Cierre de ejercicio anual (${ev.date})` };
-  if (ev.type === "MAINTENANCE_PAID") return { cls: "", text: `Reserva de O&M aplicada (${fmtMoney(d.amount)})` };
-  if (ev.type === "SCENARIO_ENDED") return { cls: "ok", text: `Fin de mandato (${ev.date})` };
+  const fn = EVENT_FMT[ev.type];
+  if (fn) return fn(d, tag, ev);
   return { cls: "", text: `${ev.type}${ev.reasonCode ? `: ${reasonText(ev.reasonCode)}` : ""}` };
 }
