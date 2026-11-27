@@ -26,7 +26,7 @@ export function qualify(state, candidate, requirements) {
   if (requirements.fundedBy) {
     const projectId = candidate.expansionId;
     const project = get(state.projects, projectId);
-    check("EXPANSION_NOT_FUNDED", "expansion", Number(Boolean(project && project.delivery <= requirements.fundedBy)),
+    check("EXPANSION_NOT_FUNDED", "expansion", Number(Boolean(["active", "delivered"].includes(project?.status) && project.delivery <= requirements.fundedBy)),
       1, ">=", "boolean", { projectId: projectId ?? null });
   }
 

@@ -36,15 +36,21 @@ for (const [strategy, projectId, openWinner, openMinutes, closedMinutes] of [
       }
 
       const staged = strategy === "por etapas";
+      if (staged) {
+        // Configuración 3A sobre la copia cargada del catálogo v0.1.
+        const water = scenario.projects.find(project => project.id === projectId);
+        water.requiresAgreementWhenSigned = "aqp-fast-access";
+        water.requiresAccessSiteId = "site-aqp-local";
+      }
       const orders = [order("startProject", "gore-04", {
         projectId, fundId: "fund-gore-04",
-      }, staged ? "2026-01-11" : scenario.startDate)];
+      }, staged ? "2026-01-31" : scenario.startDate)];
       if (staged) {
         orders.push(
           order("signAgreement", "gore-04", {
             agreementId: "aqp-fast-access", counterpartyId: "muni-0401", fundId: "fund-gore-04",
           }),
-          order("inspectSite", "gore-04", { siteId: "site-aqp-local" }, "2026-02-01"),
+          { ...order("inspectSite", "gore-04", { siteId: "site-aqp-local" }, "2026-01-31"), sequence: 1 },
         );
       }
 
@@ -53,8 +59,8 @@ for (const [strategy, projectId, openWinner, openMinutes, closedMinutes] of [
       const offer = state.offers["offer-aqp-agro"];
       assert.equal(route(state), interrupted ? closedMinutes : openMinutes);
       assert.equal(offer.siteId, interrupted ? "site-aqp-rival" : openWinner);
-      assert.equal(offer.scale, "full");
-      assert.equal(offer.score, offer.siteId === "site-aqp-rival" ? 220 : 205);
+      assert.equal(offer.scale, staged && !interrupted ? "reduced" : "full");
+      assert.equal(offer.score, offer.siteId === "site-aqp-rival" ? 220 : staged ? 215 : 205);
       if (interrupted || strategy === "corredor") {
         const reason = strategy === "corredor" ? "WATER_BELOW_MINIMUM" : "ROUTE_ABOVE_MAXIMUM";
         assert.ok(events.some(event => event.type === "OFFER_INELIGIBLE" &&
@@ -62,13 +68,18 @@ for (const [strategy, projectId, openWinner, openMinutes, closedMinutes] of [
       }
       if (staged) {
         assert.equal(state.agreements["aqp-fast-access"].delivery, "2026-01-31");
-        assert.equal(state.inspections["site-aqp-local"], "2026-02-01");
-        // El catálogo v0.1 entrega el agua antes de la oferta, a diferencia de la traza de diseño.
-        assert.equal(state.projects[projectId].delivery, "2026-04-16");
+        assert.equal(state.inspections["site-aqp-local"], "2026-01-31");
+        assert.equal(state.projects[projectId].status, "active");
+        assert.equal(state.projects[projectId].delivery, "2026-05-06");
+        const early = { ...orders[0], date: "2026-01-30" };
+        const attempt = replay(scenario, [orders[1], early].map(order => ({ date: order.date, order })), early.date);
+        assert.equal(attempt.state.orderLog.at(-1).result.reasonCode, "AGREEMENT_REQUIRED");
         assert.equal(state.funds["fund-gore-04"].maintenanceReserved, 400);
         assert.equal(state.funds["fund-muni-0401"].maintenanceReserved, 200);
       }
       const final = play(scenario, orders).state;
+      if (strategy !== "corredor") assert.equal(final.projects[projectId].status, "delivered");
+      if (strategy === "agua") assert.equal(final.projects[projectId].delivery, "2026-04-06");
       assert.equal(final.sealed, true);
       assert.equal(route(final), openMinutes);
       assert.equal(final.outcome.investment, offer.siteId === "site-aqp-local");

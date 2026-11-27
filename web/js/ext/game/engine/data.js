@@ -69,7 +69,7 @@ export function identity(dataset) {
 
 // Escenarios ejecutables: el escenario referencia IDs del catálogo y puede
 // seleccionar observaciones sustitutas para los valores desconocidos.
-export function loadScenario(dataset, scenarioId, expected = {}) {
+export function loadScenario(dataset, scenarioId, expected = {}, { today } = {}) {
   const version = identity(dataset);
   compatible(version, expected);
   const scenario = get(index(dataset.scenarios), scenarioId);
@@ -130,7 +130,24 @@ export function loadScenario(dataset, scenarioId, expected = {}) {
       throw new Error("Reserva de mantenimiento superior a la obligación");
     }
   }
-  return structuredClone(loaded);
+  const result = structuredClone(loaded);
+  if (result.startMode === "current") {
+    const offset = (+date(today) - +date(result.startDate)) / 86400000;
+    result.startDate = today;
+    result.endDate = days(result.endDate, offset);
+    for (const event of result.events) event.date = days(event.date, offset);
+    for (const offer of result.offers) {
+      offer.date = days(offer.date, offset);
+      for (const requirements of [offer.requirements, ...Object.values(offer.scales ?? {})]) {
+        for (const key of ["inspectionBefore", "fundedBy"]) {
+          if (requirements?.[key]) requirements[key] = days(requirements[key], offset);
+        }
+      }
+    }
+  } else if (result.startMode !== undefined && result.startMode !== "fixed") {
+    throw new Error("Modo de inicio inválido");
+  }
+  return result;
 }
 
 export function nonnegative(value) {
