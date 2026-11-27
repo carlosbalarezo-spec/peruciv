@@ -5,6 +5,13 @@ import { renderCommitteeView } from "./committee.js";
 import { describeEvent, fmtMoney, fmtWater, reasonText } from "./format.js";
 import { renderEmphasisStep, renderFlashback, renderOnboardingSetup } from "./onboarding.js";
 
+const EMPHASIS_LABELS = {
+  services: "Servicios básicos",
+  investment: "Inversión y corredores",
+  dialogue: "Prevención y diálogo",
+  balanced: "Agenda equilibrada",
+};
+
 const totalCost = (def) => (def.phases || []).reduce((s, p) => s + (p.cost || 0), 0);
 const totalDays = (def) => (def.phases || []).reduce((s, p) => s + (p.duration || 0), 0);
 
@@ -161,7 +168,7 @@ export function createGamePanel(handlers) {
       const tabBtn = (id, lbl) => `<button type="button" class="gm-tab${tab === id ? " active" : ""}" data-tab="${id}">${lbl}</button>`;
       host.innerHTML = `<div class="gm-wrap">
         <div class="gm-head">
-          <div><h2 class="gm-title">${esc(session.scenario.name)}</h2><p class="gm-sub">Gob. ${esc(session.govName)} · Énfasis: ${esc(session.onboarding.emphasis)}</p></div>
+          <div><h2 class="gm-title">${esc(session.scenario.name)}</h2><p class="gm-sub">Gob. ${esc(session.govName)} · ${esc(EMPHASIS_LABELS[session.onboarding.emphasis] || session.onboarding.emphasis)}</p></div>
           <button type="button" class="gh-btn" data-back-picker="1">Nueva</button>
         </div>
         <div class="gm-tabs">${tabBtn("cartera", "Cartera")}${tabBtn("ofertas", "Ofertas")}${tabBtn("oxi", "OxI")}${tabBtn("registro", `Reg. (${session.events.length})`)}</div>
