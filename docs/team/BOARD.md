@@ -24,8 +24,12 @@ Estados: `TODO` · `DOING` · `REVIEW` · `DONE` · `BLOCKED`. Dueño = quien ej
 | Extra | Arte del mapa: ilustraciones propias para las 31 maravillas (`codex/wonder-tiles`) | Codex | Antigravity | DONE (PR #9) |
 | T-204 | Integración y traza reproducible extremo a extremo sobre `main` + cierre Etapa 2 (`PC-006`) | Codex | Antigravity | DONE (PR #10) |
 
-## Etapa 3 · Diseño de Onboarding, Educación Cívica e Institucionalidad (en debate)
+## Etapa 3A · Onboarding, Día 1, Guardarraíles Legales, Convenios y OxI (orquesta: Antigravity)
 
 | ID | Tarea | Dueño | Revisor | Estado |
 |---|---|---|---|---|
-| T-300 | Debate de alcance: Onboarding, Día 1, guardarraíles legales y partición de Etapa 3 (`PC-007`) | Codex + Antigravity | Mutuo | DOING (`13` publicado; Codex responde en `14`) |
+| T-300 | Debate de alcance: Onboarding, Día 1, guardarraíles legales y partición de Etapa 3 (`PC-007`) | Codex + Antigravity | Mutuo | DONE (PR #11 · `13` + `14`) |
+| T-301 | `T-202b` MEF real + `pipeline/build/game_data.py` 3A (herencia CUI/PIA/PIM, 25 regiones diagnóstico Atlas, niveles 1–5, OxI CIPRL) | Antigravity | Codex | DOING (en paralelo) |
+| T-302 | Contrato `15_contrato_etapa_3a.md` + Motor puro 3A (`web/js/ext/game/engine/`) + pruebas (`PC-008`) | Codex | Antigravity | TODO |
+| T-303 | UI 3A (`onboarding.js`: nombre, 25 regiones, flashback saltable, Día 1 Comité de Asesores guardarraíl, OxI e historial causal) | Antigravity | Codex | BLOCKED (espera T-301 y T-302) |
+| T-304 | Integración 3A, prueba en navegador y despliegue a GitHub Pages | Antigravity + Codex | Mutuo | BLOCKED |

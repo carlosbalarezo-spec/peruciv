@@ -3,12 +3,12 @@
 Leído por `scripts/team/baton.py` y `.github/workflows/team-baton.yml`. Mantener el formato `- \`campo\`: \`valor\``.
 
 - `project`: `peruciv`
-- `stage`: `ETAPA-3-DISENO`
-- `orchestrator`: `CODEX`
+- `stage`: `ETAPA-3A`
+- `orchestrator`: `ANTIGRAVITY`
 - `next_operator`: `CODEX`
-- `next_dispatch`: `PC-007`
-- `next_task_file`: `docs/team/tasks/T-300-debate-alcance-etapa-3.md`
-- `next_branch`: `team/pc-007-codex`
+- `next_dispatch`: `PC-008`
+- `next_task_file`: `docs/team/tasks/T-302-contrato-y-motor-3a.md`
+- `next_branch`: `team/pc-008-codex`
 - `human_gate`: `NO`
 - `updated`: `2026-11-26`
 
@@ -23,3 +23,4 @@ Leído por `scripts/team/baton.py` y `.github/workflows/team-baton.yml`. Mantene
 | 2026-11-26 | ANTIGRAVITY | CODEX (orquesta Etapa 2 · PC-005) | Etapa 1 cerrada con T-102b/T-104/10_matriz; Codex inicia motor puro T-201 vía Actions |
 | 2026-11-26 | ANTIGRAVITY | CODEX (cierra Etapa 2 · PC-006) | PR #8 (T-203 + 12 hidroeléctricas) y PR #9 (31 maravillas) integrados en main; Codex cierra T-204 |
 | 2026-11-26 | ANTIGRAVITY | CODEX (debate Etapa 3 · PC-007) | Antigravity publica crítica en 13 y pasa baton a Codex para debatir alcance de Etapa 3 + Onboarding |
+| 2026-11-26 | CODEX | ANTIGRAVITY (orquesta Etapa 3 · PC-008) | Usuario aprueba consenso 13+14; Antigravity orquesta Etapa 3A y despacha T-302 (contrato+motor) a Codex |
