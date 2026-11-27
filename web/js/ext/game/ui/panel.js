@@ -1,30 +1,12 @@
-// Panel lateral del Gobernador: selector de escenario, Cartera, Ofertas y Registro.
+// Panel lateral del Gobernador: Onboarding, Día 1 Comité, Cartera, Ofertas, OxI y Registro.
 import { esc } from "../../../format.js";
 import { available, routeMinutes } from "../engine/index.js";
+import { renderCommitteeView } from "./committee.js";
 import { describeEvent, fmtMoney, fmtWater, reasonText } from "./format.js";
+import { renderEmphasisStep, renderFlashback, renderOnboardingSetup } from "./onboarding.js";
 
 const totalCost = (def) => (def.phases || []).reduce((s, p) => s + (p.cost || 0), 0);
 const totalDays = (def) => (def.phases || []).reduce((s, p) => s + (p.duration || 0), 0);
-
-function renderPicker(dataset) {
-  const cards = (dataset.scenarios || []).map((sc) => `
-    <div class="gm-card">
-      <div class="gm-card-head">
-        <span class="gm-card-title">${esc(sc.name)}</span>
-        <span class="gm-badge">${esc(sc.startDate)} → ${esc(sc.endDate)}</span>
-      </div>
-      <div class="gm-note">${sc.id === "ica-pisco-tutorial"
-        ? "Tutorial corto (5–8 min): resuelve el cuello de botella del acceso al Terminal San Martín antes del día 90."
-        : "Escenario principal: elige entre ampliar el nodo de agua, mejorar el corredor a Matarani o negociar acceso prioritario por etapas."}</div>
-      <button type="button" class="gh-btn active gm-act" data-pick="${esc(sc.id)}">Iniciar mandato</button>
-    </div>
-  `).join("");
-  return `<div class="gm-wrap">
-    <div class="gm-head"><div><h2 class="gm-title">Modo Gobernar (Simulación)</h2><p class="gm-sub">Elige un escenario sobre el mapa real del Perú</p></div></div>
-    ${cards}
-    <p class="gm-note">Nota: Los plazos, costos y ofertas de este prototipo están marcados como <b>simulación</b> sobre la geometría oficial de peruciv.</p>
-  </div>`;
-}
 
 function renderWorkCard(def, st, fundId, kind) {
   const active = kind === "project" ? st.projects?.[def.id] : st.agreements?.[def.id];
@@ -96,6 +78,27 @@ function renderOfferCard(offer, st) {
   </div>`;
 }
 
+function oxiButtons(p, st) {
+  if (st.sealed) return "";
+  const status = p ? p.status : "none";
+  if (status === "none") return `<button type="button" class="gh-btn active gm-act" data-oxi="reserveOxi">Reservar cupo CIPRL</button>`;
+  if (status === "reserved") return `<button type="button" class="gh-btn active gm-act" data-oxi="commitOxi">Firmar convenio OxI</button><button type="button" class="gh-btn gm-act" data-oxi="cancelOxi">Cancelar reserva</button>`;
+  if (status === "committed") return `<button type="button" class="gh-btn active gm-act" data-oxi="issueCiprl">Emitir CIPRL</button><button type="button" class="gh-btn gm-act" data-oxi="cancelOxi">Cancelar (con liquidación)</button>`;
+  return "";
+}
+
+function renderOxi(sc, st) {
+  const limits = Object.values(st.ciprl?.limits || {});
+  if (!limits.length) return `<p class="gm-note">Este escenario no usa tope OxI / CIPRL.</p>`;
+  const limHtml = limits.map((l) => `<div class="gm-card"><div class="gm-card-head"><span class="gm-card-title">Tope CIPRL (${esc(l.id)})</span><span class="gm-badge ok">Libre: ${fmtMoney(l.free)}</span></div><div class="gm-meta"><span>Techo: <b>${fmtMoney(l.ceiling)}</b></span><span>Previo: <b>${fmtMoney(l.prior)}</b></span><span>Reservado: <b>${fmtMoney(l.reserved)}</b></span><span>Emitido: <b>${fmtMoney(l.issued)}</b></span></div></div>`).join("");
+  const projs = (sc.oxiProjects || []).map((def) => {
+    const p = st.ciprl?.projects?.[def.id];
+    const total = Object.values(def.tranches || {}).reduce((a, b) => a + b, 0);
+    return `<div class="gm-card" data-oxi-id="${esc(def.id)}"><div class="gm-card-head"><span class="gm-card-title">${esc(def.name)}</span><span class="gm-badge">${esc(p?.status || "disponible")}</span></div><div class="gm-meta"><span>Monto: <b>${fmtMoney(total)}</b></span><span>Obra: <b>${esc(def.workId)}</b></span></div>${oxiButtons(p, st)}</div>`;
+  }).join("");
+  return `${limHtml}${projs}`;
+}
+
 function renderRegistro(st, log) {
   const endCard = st.sealed
     ? `<div class="gm-card"><div class="gm-card-head"><span class="gm-card-title">Mandato finalizado</span><span class="gm-badge ${st.outcome?.investment ? "ok" : "bad"}">${st.outcome?.investment ? "Meta lograda" : "Meta no lograda"}</span></div><p class="gm-note">Fecha de cierre: ${esc(st.date)}. Puedes reiniciar o cambiar de escenario arriba.</p></div>`
@@ -108,8 +111,13 @@ function renderRegistro(st, log) {
 }
 
 function handlePanelClick(e, handlers) {
-  const pick = e.target.closest("[data-pick]");
-  if (pick) return handlers.onPickScenario(pick.dataset.pick);
+  const ob = e.target.closest("[data-ob]");
+  if (ob) return handlers.onOnboarding(ob.dataset.ob, ob.dataset.val);
+  const d1 = e.target.closest("[data-day1-act]");
+  if (d1) return handlers.onDayOneAction(d1.dataset.day1Act, d1.dataset.fund || "");
+  if (e.target.closest("[data-day1-done]")) return handlers.onDayOneDone();
+  const oxi = e.target.closest("[data-oxi]");
+  if (oxi) return handlers.onOxi(oxi.dataset.oxi, oxi.closest("[data-oxi-id]")?.dataset.oxiId || "");
   const tab = e.target.closest("[data-tab]");
   if (tab) return handlers.onTab(tab.dataset.tab);
   const ord = e.target.closest("[data-order]");
@@ -119,36 +127,44 @@ function handlePanelClick(e, handlers) {
 
 function panelBody(session) {
   if (session.tab === "ofertas") return (session.scenario.offers || []).map((o) => renderOfferCard(o, session.state)).join("");
+  if (session.tab === "oxi") return renderOxi(session.scenario, session.state);
   if (session.tab === "registro") return renderRegistro(session.state, session.events);
   return renderCartera(session.scenario, session.state);
 }
 
+function renderPhase(session, dataset) {
+  if (session.phase === "setup") return renderOnboardingSetup(dataset, session.onboarding);
+  if (session.phase === "flashback") return renderFlashback(session.onboarding);
+  if (session.phase === "emphasis") return renderEmphasisStep(session.onboarding);
+  const reg = (dataset.regions || []).find((r) => r.id === session.scenario?.regionId);
+  if (session.phase === "day1") return renderCommitteeView(session, reg);
+  return null;
+}
+
 export function createGamePanel(handlers) {
   let host = null;
-
   return {
     attach(el) {
       host = el;
-      if (!host.dataset.gameBound) {
-        host.dataset.gameBound = "1";
-        host.addEventListener("click", (e) => handlePanelClick(e, handlers));
-      }
+      if (host.dataset.gameBound) return;
+      host.dataset.gameBound = "1";
+      host.addEventListener("click", (e) => handlePanelClick(e, handlers));
+      host.addEventListener("input", (e) => e.target.matches("[data-ob-input='name']") && handlers.onOnboarding("name", e.target.value));
+      host.addEventListener("change", (e) => e.target.dataset.obSelect && handlers.onOnboarding(e.target.dataset.obSelect, e.target.value));
     },
     detach() { host = null; },
     render(session, dataset) {
       if (!host) return;
-      if (!session.scenario || !session.state) {
-        host.innerHTML = renderPicker(dataset);
-        return;
-      }
+      const phaseHtml = renderPhase(session, dataset);
+      if (phaseHtml != null) { host.innerHTML = phaseHtml; return; }
       const tab = session.tab || "cartera";
       const tabBtn = (id, lbl) => `<button type="button" class="gm-tab${tab === id ? " active" : ""}" data-tab="${id}">${lbl}</button>`;
       host.innerHTML = `<div class="gm-wrap">
         <div class="gm-head">
-          <div><h2 class="gm-title">${esc(session.scenario.name)}</h2><p class="gm-sub">Simulación · Controla el reloj arriba</p></div>
-          <button type="button" class="gh-btn" data-back-picker="1">Escenarios</button>
+          <div><h2 class="gm-title">${esc(session.scenario.name)}</h2><p class="gm-sub">Gob. ${esc(session.govName)} · Énfasis: ${esc(session.onboarding.emphasis)}</p></div>
+          <button type="button" class="gh-btn" data-back-picker="1">Nueva</button>
         </div>
-        <div class="gm-tabs">${tabBtn("cartera", "Cartera")}${tabBtn("ofertas", "Ofertas")}${tabBtn("registro", `Registro (${session.events.length})`)}</div>
+        <div class="gm-tabs">${tabBtn("cartera", "Cartera")}${tabBtn("ofertas", "Ofertas")}${tabBtn("oxi", "OxI")}${tabBtn("registro", `Reg. (${session.events.length})`)}</div>
         ${panelBody(session)}
       </div>`;
     },
